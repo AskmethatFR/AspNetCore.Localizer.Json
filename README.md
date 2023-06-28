@@ -6,7 +6,8 @@ Json Localizer library for .NetStandard and .NetCore Asp.net projects
 
 #### Build
 
-[![Build Status](https://askmethat.visualstudio.com/AspNetCore.Localizer.Json/_apis/build/status/AlexTeixeira.Askmethat-Aspnet-JsonLocalizer?branchName=master)](https://askmethat.visualstudio.com/AspNetCore.Localizer.Json/_build/latest?definitionId=7&branchName=master)
+[![.NET](https://github.com/CorentinFoviaux/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml/badge.svg)](https://github.com/AskmethatFR/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml)
+
 # Project
 
 This library allows users to use JSON files instead of RESX in an ASP.NET application.
