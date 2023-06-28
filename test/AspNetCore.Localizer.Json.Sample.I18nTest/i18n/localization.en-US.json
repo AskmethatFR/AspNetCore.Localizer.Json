@@ -1,0 +1,15 @@
+{
+  "Home": "Home",
+  "Counter": "Counter",
+  "FetchData": "Fetch Data",
+  "Welcome": "Welcome to your new app",
+  "HelloWorld": "<h1>Hello, World</h1>",
+  "WeatherForecast": "Weather forecast",
+  "WeatherForecastDesc": "This component demonstrates fetching data from a service.",
+  "Loading": "Loading...",
+  "Date": "Date",
+  "Summary": "Summary",
+  "CurrentCount": "Current count",
+  "ClickMe": "Click me",
+  "About": "About"
+}

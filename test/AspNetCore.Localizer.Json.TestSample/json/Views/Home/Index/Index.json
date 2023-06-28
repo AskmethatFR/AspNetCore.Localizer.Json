@@ -1,0 +1,40 @@
+﻿{
+  "Hello": {
+    "Values": {
+      "en-US": "Hello!",
+      "fr-FR": "Bonjour!"
+    }
+  },
+  "Users": {
+    "Values": {
+      "en-US": "User!|Users!",
+      "fr-FR": "Utilisateur!|Utilisateurs!"
+    }
+  },
+  "fr-FR": {
+    "Values": {
+      "en-US": "French",
+      "fr-FR": "Français"
+    }
+  },
+  "en-US": {
+    "Values": {
+      "en-US": "English",
+      "fr-FR": "Anglais"
+    }
+
+  },
+  "Language": {
+    "Values": {
+      "en-US": "Language: ",
+      "fr-FR": "Langues :"
+    }
+  },
+  "Save": {
+    "Values": {
+      "en-US": "Save",
+      "fr-FR": "Sauvegarder :"
+    }
+
+  }
+}
