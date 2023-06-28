@@ -1,0 +1,21 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Publish
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: build & test              
+        uses: ./.github/workflows/dotnet.yml
+      - name: pack
+        run: dotnet pack AspNetCore.Localizer.Json.csproj -c Release 
