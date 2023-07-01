@@ -16,6 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: build & test              
-        uses: ../.github/workflows/dotnet.yml
+        uses: .github/workflows/dotnet.yml
       - name: pack
         run: dotnet pack AspNetCore.Localizer.Json.csproj -c Release 
