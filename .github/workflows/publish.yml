@@ -5,18 +5,27 @@ name: Publish
 
 on:
   push:
-    branches: [ "main" ]
+    tags:
+      - "**"
 
 jobs:
   build:
-
+    name: Build & Test
     runs-on: ubuntu-latest
-
-    build_test_from_dotnet_workflow:
-      uses: ./.github/workflows/dotnet
-      
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: pack
-        run: dotnet pack AspNetCore.Localizer.Json.csproj -c Release 
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore -c Release
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+      - name: Pack net core
+        run: dotnet pack .\AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj -o netCore -c Release /p:Version=$GITHUB_REF_NAME
+      - name: Pack blazor wasm
+        run: dotnet pack .\AspNetCore.Localizer.Json.Wasm\AspNetCore.Localizer.Json.Wasm.csproj -o netCore -c Release /p:Version=$GITHUB_REF_NAME
