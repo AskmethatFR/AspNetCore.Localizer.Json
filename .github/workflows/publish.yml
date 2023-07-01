@@ -12,10 +12,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    build_test_from_dotnet_workflow:
+      uses: ./.github/workflows/dotnet
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: build & test              
-        uses: .github/workflows/dotnet.yml
       - name: pack
         run: dotnet pack AspNetCore.Localizer.Json.csproj -c Release 
