@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net7.0</TargetFrameworks>
+        <TargetFramework>net7.0</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.6" />
     </ItemGroup>
     <ItemGroup>
         <None Update="Resources\localization.json">

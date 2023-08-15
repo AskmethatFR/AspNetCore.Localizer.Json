@@ -7,7 +7,6 @@ namespace AspNetCore.Localizer.Json.JsonOptions
 {
     public class EnvironmentWrapper
     {
-#if NETCORE
         private IWebHostEnvironment serverEnvironment;
 
         public EnvironmentWrapper(IWebHostEnvironment hostingEnvironmentStub)
@@ -15,10 +14,7 @@ namespace AspNetCore.Localizer.Json.JsonOptions
             this.serverEnvironment = hostingEnvironmentStub;
         }
 
-#endif
         public string ContentRootPath { get; internal set; }
         public bool IsWasm { get; } = false;
-
-
     }
 }

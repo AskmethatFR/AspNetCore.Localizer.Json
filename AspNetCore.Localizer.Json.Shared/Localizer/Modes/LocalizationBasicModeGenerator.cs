@@ -25,7 +25,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                         LocalisationModeHelpers.ReadAndDeserializeFile<string, JsonLocalizationFormat>(file,
                             options.FileEncoding);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     if (!options.IgnoreJsonErrors)
                         throw;

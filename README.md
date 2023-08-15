@@ -1,5 +1,5 @@
 # AspNetCore.Localizer.Json
-Json Localizer library for .NetStandard and .NetCore Asp.net projects
+Json Localizer library for .NetCore Asp.net projects
 
 #### Nuget
 [![NuGet](https://img.shields.io/nuget/dt/AspNetCore.Localizer.Json.svg)](https://www.nuget.org/packages/AspNetCore.Localizer.Json)
@@ -12,7 +12,7 @@ Json Localizer library for .NetStandard and .NetCore Asp.net projects
 
 This library allows users to use JSON files instead of RESX in an ASP.NET application.
 The code tries to be most compliant with Microsoft guidelines.
-The library is compatible with NetStandard & NetCore.
+The library is compatible with NetCore.
 
 # Configuration
 
@@ -52,6 +52,7 @@ services.AddJsonLocalization(options => {
 - **LocalizationMode** : *_default value: Basic*. Define the localization mode for the Json file. Currently Basic and I18n. More information in *LocalizationMode*
 - **MissingTranslationsOutputFile** : This enables to specify in which file the missing translations will be written when `MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON`, defaults to `MissingTranslations.json`
 - **IgnoreJsonErrors**: This properly will ignore the JSON errors if set to true. Recommended in production but not in development.
+
 
 ### Search patterns when UseBaseName = true
 
@@ -116,22 +117,11 @@ from **IJsonStringLocalizer** this method ```MarkupString GetHtmlBlazorString(st
 
 **Platform Support**
 
-**Version 3.2 and bellow**
-
-|Platform|Version|
-| -------------------  | :------------------: |
-|NetCore|3.0.0+|
-|NetStandard|2.1.0+|
-|Blazor Server|3.0.0+|
-
-**Version 4 and above**
-
 | Platform      | Version |
 |---------------|:-------:|
-| NetCore       | 5.0.0+  |
-| NetStandard   | 2.1.0+  |
-| Blazor Server | 5.0.0+  |
-| Blazor Wasm   | 5.0.0+  |
+| NetCore       | 7.0.0+  |
+| Blazor Server | 7.0.0+  |
+| Blazor Wasm   | 7.0.0+  |
 
 
 
@@ -171,6 +161,32 @@ If you need a fallback culture that target all culture, you can create a file na
 
 For more information :
 https://github.com/AlexTeixeira/Askmethat-Aspnet-JsonLocalizer/issues/64
+
+# Blazor Wasm
+
+### Specific Wasm Options
+
+- **JsonFileList** : *_default value: null*. List of json files to load. If null, all json files will be loaded.
+
+### Blazor Wasm Specificities
+
+Because of the way Blazor Wasm works, the plugin will not be able to load files from the server.
+To avoid this, you should embed your files in the project and use the following code :
+
+``` csproj
+ <EmbeddedResource Include="Resources\localization.json">
+  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+ </EmbeddedResource>
+```
+
+The second specificities is the management of the language files.
+Blazor Wasm uses the file path as Assembly name, so you can't have multiple files with the same name.
+
+For example, if you have a file named **localization.json** in the folder **Resources**, 
+you can't have another file starting with name **localization** in the folder **Resources**, 
+a file with the name **localization.fr.json** will throw an exception.
+
+So you should have different folder for each language culture.
 
 # Performances
 

@@ -52,7 +52,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
                     var isParent =
                         fileCulture.Name.Equals(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase);
-
+ 
                     if (fileCulture.Name.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
                         isParent && fileCulture.Name != "json")
                     {

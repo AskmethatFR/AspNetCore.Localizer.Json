@@ -25,4 +25,6 @@ jobs:
     - name: Build
       run: dotnet build --no-restore -c Release
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --verbosity normal
+      working-directory: test/AspNetCore.Localizer.Json.Test
+

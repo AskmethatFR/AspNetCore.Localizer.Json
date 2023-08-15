@@ -139,17 +139,28 @@ namespace AspNetCore.Localizer.Json.Localizer
 
             IEnumerable<string> myFiles;
             LocalizationMode localizationMode = _localizationOptions.Value.LocalizationMode;
+            myFiles = GetJsonFilesPath(jsonPath, localizationMode);
+
+            localization = LocalizationModeFactory.GetLocalisationFromMode(localizationMode, _localizationOptions.Value.Assembly)
+                .ConstructLocalization(myFiles, currentCulture, _localizationOptions.Value);
+        }
+
+        private IEnumerable<string> GetJsonFilesPath(List<string> jsonPath, LocalizationMode localizationMode)
+        {
+            IEnumerable<string> myFiles;
             if (_environment?.IsWasm ?? false)
             {
                 myFiles = _localizationOptions.Value.JsonFileList;
                 if (localizationMode != LocalizationMode.BlazorWasm)
-                    throw new ArgumentException($"Only {nameof(LocalizationMode)}.{LocalizationMode.BlazorWasm} mode is supported in Client WASM mode");
+                    throw new ArgumentException(
+                        $"Only {nameof(LocalizationMode)}.{LocalizationMode.BlazorWasm} mode is supported in Client WASM mode");
             }
             else
+            {
                 myFiles = GetMatchingJsonFiles(jsonPath);
+            }
 
-            localization = LocalizationModeFactory.GetLocalisationFromMode(localizationMode, _localizationOptions.Value.Assembly)
-                .ConstructLocalization(myFiles, currentCulture, _localizationOptions.Value);
+            return myFiles;
         }
 
         private IEnumerable<string> GetMatchingJsonFiles(List<string> jsonPaths)

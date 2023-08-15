@@ -19,11 +19,14 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js">
-        window.blazorCulture = {
-            get: () => window.localStorage['BlazorCulture'],
-            set: (value) => window.localStorage['BlazorCulture'] = value
-        };
     </script>
+
+<script>
+    window.blazorCulture = {
+        get: () => window.localStorage['BlazorCulture'],
+        set: (value) => window.localStorage['BlazorCulture'] = value
+    };
+</script>
 
 </body>
 

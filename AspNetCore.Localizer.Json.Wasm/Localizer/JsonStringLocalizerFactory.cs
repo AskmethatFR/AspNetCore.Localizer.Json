@@ -1,7 +1,4 @@
 ﻿using AspNetCore.Localizer.Json.Extensions;
-#if NETSTANDARD
-using Microsoft.AspNetCore.Hosting;
-#endif
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System;
@@ -28,8 +25,6 @@ namespace AspNetCore.Localizer.Json.Localizer
             _env = env;
             _localizationOptions = localizationOptions ?? throw new ArgumentNullException(nameof(localizationOptions));
         }
-
-
 
         public IStringLocalizer Create(Type resourceSource)
         {

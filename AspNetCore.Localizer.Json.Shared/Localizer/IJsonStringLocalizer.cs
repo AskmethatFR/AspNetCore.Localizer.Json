@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Microsoft.Extensions.Localization;
-#if NETCORE
 using Microsoft.AspNetCore.Components;
-#endif
 
 namespace AspNetCore.Localizer.Json.Localizer
 {
@@ -13,9 +11,7 @@ namespace AspNetCore.Localizer.Json.Localizer
 	    void ReloadMemCache(IEnumerable<CultureInfo> culturesToClearFromCache = null);
 	    IStringLocalizer WithCulture(CultureInfo culture);
 	    LocalizedString GetPlural(string key, double count, params object[] arguments);
-#if NETCORE
 	    MarkupString GetHtmlBlazorString(string name, bool shouldTryDefaultCulture = true);
-#endif
     }
 
     public interface IJsonStringLocalizer<out T> : IJsonStringLocalizer

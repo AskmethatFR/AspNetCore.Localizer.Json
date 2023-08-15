@@ -1,7 +1,4 @@
 using AspNetCore.Localizer.Json.JsonOptions;
-#if NETSTANDARD
-using Microsoft.AspNetCore.Hosting;
-#endif
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System.Net.Http;

@@ -27,13 +27,13 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             _options = options;
 
-            var enumerable = myFiles as string[] ?? myFiles.ToArray();
-            var neutralFiles = enumerable.Where(file => Path.GetFileName(file)
+            string[] enumerable = myFiles as string[] ?? myFiles.ToArray();
+            List<string> neutralFiles = enumerable.Where(file => Path.GetFileName(file)
                 .Count(s => s.CompareTo('.') == 0) == 1).ToList();
-            var isInvariantCulture =
+            bool isInvariantCulture =
                 currentCulture.DisplayName == CultureInfo.InvariantCulture.ThreeLetterISOLanguageName;
 
-            var files = isInvariantCulture
+            string[] files = isInvariantCulture
                 ? new string[] { }
                 : enumerable.Where(file => Path.GetFileName(file).Split('.').Any(
                     s => (s.IndexOf(currentCulture.Name, StringComparison.OrdinalIgnoreCase) >= 0
@@ -43,12 +43,13 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             if (files.Any() && !isInvariantCulture)
             {
-                foreach (var file in files)
+                foreach (string file in files)
                 {
-                    var fileName = Path.GetFileName(file);
-                    var fileCulture = new CultureInfo(fileName.Split('.')[^2] ?? String.Empty);
+                    string fileName = Path.GetFileName(file);
+                    string cultureName = GetCultureNameFromFile(fileName);
+                    CultureInfo fileCulture = new CultureInfo(cultureName);
 
-                    var isParent =
+                    bool isParent =
                         fileCulture.Name.Equals(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase);
 
                     if (fileCulture.Name.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
@@ -62,12 +63,23 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             {
                 if (neutralFiles.Any())
                 {
-                    foreach (var neutralFile in neutralFiles)
+                    foreach (string neutralFile in neutralFiles)
                         AddValueToLocalization(options, neutralFile, true);
                 }
             }
 
             return localization;
+        }
+
+        private static string GetCultureNameFromFile(string fileName)
+        {
+            string[] split = fileName.Split('.');
+            if (split.Length > 2)
+            {
+                return split[^2];
+            }
+
+            return string.Empty;
         }
 
         private static readonly JsonDocumentOptions Options = new JsonDocumentOptions() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
@@ -76,11 +88,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             try
             {
-                using var doc = JsonDocument.Parse(ReadFile(options, file), Options);
-                if (doc is null)
-                {
-                    return;
-                }
+                using JsonDocument doc = JsonDocument.Parse(ReadFile(options, file), Options);
 
                 AddValues(doc.RootElement, null, isParent);
             }
@@ -95,7 +103,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             // Json Object could either contain an array or an object or just values
             // For the field names, navigate to the root or the first element
-            var input = element;
+            JsonElement input = element;
 
 
             // check if the object is of type JObject. 
@@ -103,16 +111,16 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             if (input.ValueKind == JsonValueKind.Object)
             {
                 // Read Properties
-                var properties = input.EnumerateObject();
+                JsonElement.ObjectEnumerator properties = input.EnumerateObject();
 
                 // Loop through all the properties of that JObject
-                foreach (var property in properties)
+                foreach (JsonProperty property in properties)
                 {
                     // Check if there are any sub-fields (nested)
                     if (property.Value.ValueKind == JsonValueKind.Object)
                     {
                         // If yes, enter the recursive loop to extract sub-field names
-                        var newBaseName = String.IsNullOrEmpty(baseName)
+                        string newBaseName = String.IsNullOrEmpty(baseName)
                             ? property.Name
                             : String.Format("{0}.{1}", baseName, property.Name);
                         AddValues(property.Value, newBaseName, isParent);
@@ -124,7 +132,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     else
                     {
                         // If there are no sub-fields, the property name is the field name
-                        var temp = new KeyValuePair<string, string>(
+                        KeyValuePair<string, string> temp = new KeyValuePair<string, string>(
                             String.IsNullOrEmpty(baseName)
                                 ? property.Name
                                 : $"{baseName}.{property.Name}",

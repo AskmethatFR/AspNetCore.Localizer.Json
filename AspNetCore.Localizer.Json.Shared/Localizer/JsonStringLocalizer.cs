@@ -1,19 +1,14 @@
-﻿using AspNetCore.Localizer.Json.Extensions;
+﻿#nullable enable
+using AspNetCore.Localizer.Json.Extensions;
 using AspNetCore.Localizer.Json.Format;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using AspNetCore.Localizer.Json.JsonOptions;
-using System.Net.Http;
-using System.Reflection;
 using System.Text.Json;
-#if NETCORE
 using Microsoft.AspNetCore.Components;
-#endif
 
 
 namespace AspNetCore.Localizer.Json.Localizer
@@ -212,14 +207,12 @@ namespace AspNetCore.Localizer.Json.Localizer
             return null;
         }
 
-#if NETCORE
 
         public MarkupString GetHtmlBlazorString(string name, bool shouldTryDefaultCulture = true)
         {
             return new MarkupString(GetString(name, shouldTryDefaultCulture));
         }
 
-#endif
         private void InitJsonFromCulture(CultureInfo cultureInfo)
         {
             InitJsonStringLocalizer(cultureInfo);
