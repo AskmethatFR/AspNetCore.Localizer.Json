@@ -1,0 +1,15 @@
+{
+  "Color": {
+    "Values": {
+      "": "Color (invariant)",
+      "en": "Color (neutral)",
+      "en-AU": "Colour (specific)",
+      "fr": "Couleur (neutre)"
+    }
+  },
+  "Empty": {
+    "Values": {
+      "en": "Empty"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "Name1": {
+    "Values": {
+      "en-US": "My Name 1",
+      "fr-FR": "Mon Nom 1",
+      // also comments are supported in json files
+      "pt-PT": "Eu so joão"
+    }
+  },
+  "Name2": {
+    "Values": {
+      "en-US": "My Name 2",
+      "fr-FR": "Mon Nom 2"
+    }
+  }
+}

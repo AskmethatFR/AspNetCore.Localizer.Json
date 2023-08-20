@@ -1,0 +1,74 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32113.165
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json", "AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj", "{0FB2924B-389A-40C3-81D9-8DC74A971E20}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json.Test", "test\AspNetCore.Localizer.Json.Test\AspNetCore.Localizer.Json.Test.csproj", "{592F2830-9D3D-4573-80B2-9AF9F7D4C7BD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json.TestSample", "test\AspNetCore.Localizer.Json.TestSample\AspNetCore.Localizer.Json.TestSample.csproj", "{E7F8CBFA-DAA7-4B82-810E-BA3CB24C11D7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json.Benchmark", "benchmark\AspNetCore.Localizer.Json.Benchmark\AspNetCore.Localizer.Json.Benchmark.csproj", "{A31FF43B-9A52-44A1-B7D2-469347B9EF46}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json.Sample.I18nTest", "test\AspNetCore.Localizer.Json.Sample.I18nTest\AspNetCore.Localizer.Json.Sample.I18nTest.csproj", "{630D66E9-7DD4-4B6C-891A-F9D829BBE2B9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json.Sample.BlazorWebAssembly", "test\AspNetCore.Localizer.Json.BlazorWebAssembly\AspNetCore.Localizer.Json.Sample.BlazorWebAssembly.csproj", "{D4271821-DC98-4FB9-A7C3-107535DFB2F1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.Localizer.Json.Wasm", "AspNetCore.Localizer.Json.Wasm\AspNetCore.Localizer.Json.Wasm.csproj", "{E0931C8C-79ED-4DE7-A70A-C06AE092B218}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{3ECBD0D1-CF2E-4349-92AA-F3B09495F1F8}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "AspNetCore.Localizer.Json.Shared", "AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.shproj", "{04DFB351-A1DE-48CE-91E2-C3CA53F03913}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0FB2924B-389A-40C3-81D9-8DC74A971E20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FB2924B-389A-40C3-81D9-8DC74A971E20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FB2924B-389A-40C3-81D9-8DC74A971E20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FB2924B-389A-40C3-81D9-8DC74A971E20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{592F2830-9D3D-4573-80B2-9AF9F7D4C7BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{592F2830-9D3D-4573-80B2-9AF9F7D4C7BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{592F2830-9D3D-4573-80B2-9AF9F7D4C7BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{592F2830-9D3D-4573-80B2-9AF9F7D4C7BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7F8CBFA-DAA7-4B82-810E-BA3CB24C11D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7F8CBFA-DAA7-4B82-810E-BA3CB24C11D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7F8CBFA-DAA7-4B82-810E-BA3CB24C11D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7F8CBFA-DAA7-4B82-810E-BA3CB24C11D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A31FF43B-9A52-44A1-B7D2-469347B9EF46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A31FF43B-9A52-44A1-B7D2-469347B9EF46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A31FF43B-9A52-44A1-B7D2-469347B9EF46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A31FF43B-9A52-44A1-B7D2-469347B9EF46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{630D66E9-7DD4-4B6C-891A-F9D829BBE2B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{630D66E9-7DD4-4B6C-891A-F9D829BBE2B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{630D66E9-7DD4-4B6C-891A-F9D829BBE2B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{630D66E9-7DD4-4B6C-891A-F9D829BBE2B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4271821-DC98-4FB9-A7C3-107535DFB2F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4271821-DC98-4FB9-A7C3-107535DFB2F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4271821-DC98-4FB9-A7C3-107535DFB2F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4271821-DC98-4FB9-A7C3-107535DFB2F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0931C8C-79ED-4DE7-A70A-C06AE092B218}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0931C8C-79ED-4DE7-A70A-C06AE092B218}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0931C8C-79ED-4DE7-A70A-C06AE092B218}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0931C8C-79ED-4DE7-A70A-C06AE092B218}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C12FA747-265B-45D8-82EA-15C108B0C1A8}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems*{04dfb351-a1de-48ce-91e2-c3ca53f03913}*SharedItemsImports = 13
+		AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems*{0fb2924b-389a-40c3-81d9-8dc74a971e20}*SharedItemsImports = 5
+		AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems*{e0931c8c-79ed-4de7-a70a-c06ae092b218}*SharedItemsImports = 5
+	EndGlobalSection
+EndGlobal
