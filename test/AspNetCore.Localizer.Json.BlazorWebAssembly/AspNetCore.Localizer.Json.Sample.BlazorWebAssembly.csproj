@@ -18,14 +18,15 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="AspNetCore.Localizer.Json.Wasm" Version="0.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.9" PrivateAssets="all" />
         <PackageReference Include="Microsoft.AspNetCore.Localization" Version="2.2.0" />
         <PackageReference Include="System.Net.Http.Json" Version="7.0.1" />
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\..\AspNetCore.Localizer.Json.Wasm\AspNetCore.Localizer.Json.Wasm.csproj" />
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--        <ProjectReference Include="..\..\AspNetCore.Localizer.Json.Wasm\AspNetCore.Localizer.Json.Wasm.csproj" />-->
+<!--    </ItemGroup>-->
 
 </Project>

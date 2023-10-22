@@ -24,12 +24,17 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release
       - name: Test
-        run:  dotnet test .\AspNetCore.Localizer.Json\test\AspNetCore.Localizer.Json.Test\AspNetCore.Localizer.Json.Test.csproj --no-build --verbosity normal
+        run: dotnet test --verbosity normal
+        working-directory: test/AspNetCore.Localizer.Json.Test
       - name: Pack net core
-        run: dotnet pack .\AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj -o netCore -c Release /p:Version=$GITHUB_REF_NAME
+        run: dotnet pack -o netCore -c Release /p:Version=$GITHUB_REF_NAME
+        working-directory: AspNetCore.Localizer.Json
       - name: Pack blazor wasm
-        run: dotnet pack .\AspNetCore.Localizer.Json.Wasm\AspNetCore.Localizer.Json.Wasm.csproj -o wasm -c Release /p:Version=$GITHUB_REF_NAME
+        run: dotnet pack -o wasm -c Release /p:Version=$GITHUB_REF_NAME
+        working-directory: AspNetCore.Localizer.Json.Wasm
       - name: Push net core to nuget
-        run: dotnet push .\netCore\AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
+        run: dotnet push AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
+        working-directory: AspNetCore.Localizer.Json/netCore
       - name: Push blazor wasm to nuget
-        run: dotnet push .\wasm\AspNetCore.Localizer.Json.Wasm.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}    
+        run: dotnet push AspNetCore.Localizer.Json.Wasm.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
+        working-directory: AspNetCore.Localizer.Json.Wasm/wasm
