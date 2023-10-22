@@ -3,6 +3,7 @@ Json Localizer library for .NetCore Asp.net projects
 
 #### Nuget
 [![NuGet](https://img.shields.io/nuget/dt/AspNetCore.Localizer.Json.svg)](https://www.nuget.org/packages/AspNetCore.Localizer.Json)
+[![NuGet](https://img.shields.io/nuget/dt/AspNetCore.Localizer.Json.Wasm.svg)](https://www.nuget.org/packages/AspNetCore.Localizer.Wasm.Json)
 
 #### Build
 

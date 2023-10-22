@@ -42,6 +42,24 @@ namespace AspNetCore.Localizer.Json.Sample.BlazorWebAssembly
         {
             _host = _builder.Build();
             
+            
+            CultureInfo culture;
+            var js = _host.Services.GetRequiredService<IJSRuntime>();
+            var result = await js.InvokeAsync<string>("blazorCulture.get");
+
+            if (result != null)
+            {
+                culture = new CultureInfo(result);
+            }
+            else
+            {
+                culture = new CultureInfo(_supportedCultures.First().Name);
+                await js.InvokeVoidAsync("blazorCulture.set", _supportedCultures.First().Name);
+            }
+
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            
         }
 
         private static void ConfigureServices(IServiceCollection services)
@@ -75,7 +93,7 @@ namespace AspNetCore.Localizer.Json.Sample.BlazorWebAssembly
                 options.JsonFileList = new[]
                 {
                     "AspNetCore.Localizer.Json.Sample.BlazorWebAssembly/Resources/localization.json",
-                    "AspNetCore.Localizer.Json.Sample.BlazorWebAssembly/I18n/localization.pt.json",
+                    "AspNetCore.Localizer.Json.Sample.BlazorWebAssembly/Resources/pt/localization.json",
                     "AspNetCore.Localizer.Json.Sample.BlazorWebAssembly/Resources/fr/localization.json"
                 };
             });
@@ -88,6 +106,7 @@ namespace AspNetCore.Localizer.Json.Sample.BlazorWebAssembly
                 // UI strings that we have localized.
                 options.SupportedUICultures = _supportedCultures.ToList();
             });
+            
         }
     }
 }
