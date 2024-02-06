@@ -19,10 +19,20 @@ namespace AspNetCore.Localizer.Json.Localizer
         private IDictionary<string, IDictionary<string, string>> _missingJsonValues = null;
         private string _missingTranslations = null;
 
+        private static LocalizedString ConvertToChar(string value, char c, int additionalRepeats = 0)
+        {
+            //repeat c the length of value
+            return new LocalizedString(value, new string(c, value.Length + additionalRepeats));
+        }
+
         public LocalizedString this[string name]
         {
             get
             {
+                if (_localizationOptions.Value.LocalizerDiagnosticMode)
+                {
+                    return ConvertToChar(name, 'X');
+                }
                 string value = GetString(name);
                 return new LocalizedString(name, value ?? name, resourceNotFound: value == null);
             }
@@ -32,6 +42,10 @@ namespace AspNetCore.Localizer.Json.Localizer
         {
             get
             {
+                if (_localizationOptions.Value.LocalizerDiagnosticMode)
+                {
+                    return ConvertToChar(name, 'X');
+                }
                 string format = GetString(name);
                 string value = GetPluralLocalization(name, format, arguments);
                 return new LocalizedString(name, value, resourceNotFound: format == null);
@@ -278,14 +292,23 @@ namespace AspNetCore.Localizer.Json.Localizer
             {
                 try
                 {
-                    foreach (var locale in _missingTranslations)
+                    foreach (var locale in _missingJsonValues!)
                     {
+                        var dic = _missingJsonValues[locale.Key];
                         // save missing values
-                        var json = JsonSerializer.Serialize(_missingJsonValues);
-                        Console.Error.WriteLine($"Writing {_missingJsonValues?.Count} missing translations to {Path.GetFullPath(_missingTranslations)}");
-                        lock (this)
+                        if (dic != null)
                         {
-                            File.WriteAllText(_missingTranslations, json);
+                            var json = JsonSerializer.Serialize(dic);
+                            var file = Path.GetFileNameWithoutExtension(_missingTranslations);
+                            var extension = Path.GetExtension(_missingTranslations);
+                            var newFile = $"{file}-{locale.Key}.{extension}";
+                            Console.Error.WriteLine($"Writing {dic.Count} missing translations to {Path.GetFullPath(newFile)}");
+                            lock (this)
+                            {
+                                // add the locale before the extension
+                                // e.g. missing-translations.json -> missing-translations.en.json
+                                File.WriteAllText(newFile, json);
+                            }
                         }
                     }
                 }

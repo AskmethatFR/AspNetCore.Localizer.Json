@@ -135,6 +135,11 @@ namespace AspNetCore.Localizer.Json.JsonOptions
         public string MissingTranslationsOutputFile { get; set; } = DEFAULT_MISSING_TRANSLATIONS;
 
         /// <summary>
+        /// If set to true, the localizer will replace all the translated text with "*" to help identify missing translations.
+        /// </summary>
+        public bool LocalizerDiagnosticMode { get; set; } = false;
+
+        /// <summary>
         /// If a list of files is provided, the localizer will not attempt to scan i18n directories. This option is required for Blazor Wasm.
         /// </summary>
         public string[] JsonFileList { get; set; } = null;
