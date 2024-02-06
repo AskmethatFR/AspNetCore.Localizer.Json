@@ -56,6 +56,7 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 options.IsAbsolutePath = _jsonLocalizationOptions.IsAbsolutePath;
                 options.MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON;
                 options.LocalizationMode = LocalizationMode.I18n;
+                options.LocalizerDiagnosticMode = _jsonLocalizationOptions.LocalizerDiagnosticMode;
             });
             
             services.Configure<RequestLocalizationOptions>(options =>

@@ -40,12 +40,20 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
         public void Should_Track_Colored_NotFound()
         {
             var defaultJsonFile = JsonLocalizationOptions.DEFAULT_MISSING_TRANSLATIONS;
-            if (File.Exists(defaultJsonFile))
-                File.Delete(defaultJsonFile);
+            //add 'default' before extension in filename
+            var extension = Path.GetExtension(defaultJsonFile);
+            var name = Path.GetFileNameWithoutExtension(defaultJsonFile);
+            var actualName = $"{name}-default{extension}";
+            
+            if (File.Exists(actualName))
+                File.Delete(actualName);
             InitLocalizer("en-AU");
             var result = localizer.GetString("Colored",false);
             Assert.IsTrue(result.ResourceNotFound);
-            Assert.IsTrue(File.Exists(defaultJsonFile));
+            // list all files that have .json extension
+            var allJsonFiles = Directory.GetFiles($".", "*.json").ToList();
+
+            Assert.IsTrue(allJsonFiles.Exists(s => s.Contains(name)));
         }
 
         /// <summary>
