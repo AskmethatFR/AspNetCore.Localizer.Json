@@ -33,8 +33,6 @@ jobs:
         run: dotnet pack -o wasm -c Release /p:Version=$GITHUB_REF_NAME
         working-directory: AspNetCore.Localizer.Json.Wasm
       - name: Push net core to nuget
-        run: dotnet nuget push AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-        working-directory: AspNetCore.Localizer.Json/netCore
+        run: dotnet nuget push AspNetCore.Localizer.Json/netCore/AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
       - name: Push blazor wasm to nuget
-        run: dotnet nuget push AspNetCore.Localizer.Json.Wasm.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-        working-directory: AspNetCore.Localizer.Json.Wasm/wasm
+        run: dotnet nuget push AspNetCore.Localizer.Json.Wasm/wasm/AspNetCore.Localizer.Json.Wasm.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
