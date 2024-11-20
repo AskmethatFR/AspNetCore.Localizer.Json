@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
 
@@ -15,32 +14,39 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             IEnumerable<string> myFiles, CultureInfo currentCulture, JsonLocalizationOptions options)
         {
             _options = options;
-            
-            foreach (string file in myFiles)
+
+            // Ajouter les fichiers provenant des chemins additionnels
+            var allFiles = new List<string>(myFiles);
+            if (_options.AdditionalResourcePaths != null)
             {
-                ConcurrentDictionary<string, JsonLocalizationFormat> tempLocalization = null;
+                foreach (var additionalPath in _options.AdditionalResourcePaths)
+                {
+                    if (Directory.Exists(additionalPath))
+                    {
+                        allFiles.AddRange(Directory.GetFiles(additionalPath, "*.json", SearchOption.AllDirectories));
+                    }
+                }
+            }
+
+            // Construire la localisation avec tous les fichiers disponibles
+            foreach (string file in allFiles)
+            {
                 try
                 {
-                    tempLocalization =
-                        LocalisationModeHelpers.ReadAndDeserializeFile<string, JsonLocalizationFormat>(file,
-                            options.FileEncoding);
+                    var tempLocalization = LocalisationModeHelpers.ReadAndDeserializeFile<string, JsonLocalizationFormat>(file, options.FileEncoding);
+                    if (tempLocalization == null)
+                        continue;
+
+                    foreach (var temp in tempLocalization)
+                    {
+                        var localizedValue = GetLocalizedValue(currentCulture, temp);
+                        AddOrUpdateLocalizedValue(localizedValue, temp);
+                    }
                 }
                 catch (Exception)
                 {
                     if (!options.IgnoreJsonErrors)
                         throw;
-                        
-                }
-
-                if (tempLocalization == null)
-                {
-                    continue;
-                }
-
-                foreach (KeyValuePair<string, JsonLocalizationFormat> temp in tempLocalization)
-                {
-                    LocalizatedFormat localizedValue = GetLocalizedValue(currentCulture, temp);
-                    AddOrUpdateLocalizedValue<JsonLocalizationFormat>(localizedValue, temp);
                 }
             }
 
@@ -52,21 +58,35 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             var localizationFormat = temp.Value;
             bool isParent = false;
-            string value = localizationFormat.Values.FirstOrDefault(s =>
-                string.Equals(s.Key, currentCulture.Name, StringComparison.OrdinalIgnoreCase)).Value;
-            if (value is null)
+            string value = null;
+
+            // Essayez de trouver la valeur pour la culture actuelle
+            if (localizationFormat.Values.TryGetValue(currentCulture.Name, out value))
+            {
+                return new LocalizatedFormat()
+                {
+                    IsParent = false,
+                    Value = value
+                };
+            }
+
+            // Si la valeur n'est pas trouvée, essayez la culture parente
+            if (localizationFormat.Values.TryGetValue(currentCulture.Parent.Name, out value))
             {
                 isParent = true;
-                value = localizationFormat.Values.FirstOrDefault(s =>
-                    string.Equals(s.Key, currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase)).Value;
-                if (value is null)
+            }
+            else
+            {
+                // Essayez de trouver une valeur par défaut (chaîne vide)
+                if (localizationFormat.Values.TryGetValue(string.Empty, out value))
                 {
-                    value = localizationFormat.Values.FirstOrDefault(s => string.IsNullOrWhiteSpace(s.Key)).Value;
-                    if (value is null && _options.DefaultCulture != null)
-                    {
-                        value = localizationFormat.Values.FirstOrDefault(s => string.Equals(s.Key,
-                            _options.DefaultCulture.Name, StringComparison.OrdinalIgnoreCase)).Value;
-                    }
+                    isParent = true;
+                }
+                // Si aucune valeur n'est trouvée, essayez la culture par défaut
+                else if (_options.DefaultCulture != null &&
+                         localizationFormat.Values.TryGetValue(_options.DefaultCulture.Name, out value))
+                {
+                    isParent = true;
                 }
             }
 

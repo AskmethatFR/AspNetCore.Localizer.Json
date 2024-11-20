@@ -1,187 +1,87 @@
-﻿using AspNetCore.Localizer.Json.Test.Helpers;
-using Microsoft.Extensions.Localization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
+using System.IO;
+using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
-using AspNetCore.Localizer.Json.Localizer;
 
-
-namespace AspNetCore.Localizer.Json.Test.Localizer
+namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
-    [TestClass]
-    public class JsonStringLocalizerTest
+    internal class LocalizationBasicModeGenerator : LocalizationModeBase, ILocalizationModeGenerator
     {
-        [TestInitialize]
-        public void Init()
+        public ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(
+            IEnumerable<string> myFiles, CultureInfo currentCulture, JsonLocalizationOptions options)
         {
-            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
-        }
+            _options = options;
 
-        [TestMethod]
-        public void Should_Read_Base_Name1()
-        {
-            CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
-
-            // Arrange           
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            foreach (string file in myFiles)
             {
-                DefaultCulture = new CultureInfo("fr-FR")
-            });
-
-            LocalizedString result = localizer.GetString("BaseName1");
-
-            Assert.AreEqual("Mon Nom de Base 1", result);
-        }
-
-        [TestMethod]
-        public void Should_Read_Base_NotFound()
-        {
-            // Arrange
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("en-US")
-            });
-            LocalizedString result = localizer.GetString("Nop");
-
-            Assert.AreEqual("Nop", result);
-
-        }
-
-        [TestMethod]
-        public void Should_Read_Base_UseDefault()
-        {
-            // Arrange
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("en-US")
-            });
-
-            LocalizedString result = localizer.GetString("NoFrench");
-
-            Assert.AreEqual("No more french", result);
-        }
-
-        [TestMethod]
-        public void Should_Read_Base_Name1_US()
-        {
-            // Arrange
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("en-US")
-            });
-
-            LocalizedString result = localizer.GetString("BaseName1");
-
-            Assert.AreEqual("My Base Name 1", result);
-        }
-
-        [TestMethod]
-        public void Should_Read_Default_Name1_US()
-        {
-            // Arrange
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("en-US"),
-                SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>()
+                try
                 {
-                     new CultureInfo("de-DE")
+                    var tempLocalization = LocalisationModeHelpers.ReadAndDeserializeFile<string, JsonLocalizationFormat>(file, options.FileEncoding);
+
+                    if (tempLocalization == null)
+                        continue;
+
+                    foreach (var temp in tempLocalization)
+                    {
+                        var localizedValue = GetLocalizedValue(currentCulture, temp);
+                        AddOrUpdateLocalizedValue(localizedValue, temp);
+                    }
                 }
-            });
-            LocalizedString result = localizer.GetString("BaseName1");
-
-            Assert.AreEqual("My Base Name 1", result);
-        }
-
-        [TestMethod]
-        public void Should_Read_CaseInsensitive_CultureName()
-        {
-            CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
-
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("en-US"),
-                SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>()
+                catch (Exception)
                 {
-                     new CultureInfo("fr-FR")
+                    if (!options.IgnoreJsonErrors)
+                        throw;
                 }
-            });
+            }
 
-            LocalizedString result = localizer.GetString("CaseInsensitiveCultureName");
-            Assert.AreEqual("French", result);
+            return localization;
         }
 
-        [TestMethod]
-        public void Should_Read_CaseInsensitive_UseDefault()
+        private LocalizatedFormat GetLocalizedValue(CultureInfo currentCulture,
+            KeyValuePair<string, JsonLocalizationFormat> temp)
         {
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            var localizationFormat = temp.Value;
+            bool isParent = false;
+            string value = null;
+
+            // Essayez de trouver la valeur pour la culture actuelle
+            if (localizationFormat.Values.TryGetValue(currentCulture.Name, out value))
             {
-                DefaultCulture = new CultureInfo("en-US"),
-                SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>()
+                return new LocalizatedFormat()
                 {
-                     new CultureInfo("de-DE")
-                }
-            });
+                    IsParent = false,
+                    Value = value
+                };
+            }
 
-            LocalizedString result = localizer.GetString("CaseInsensitiveCultureName");
-            Assert.AreEqual("US English", result);
-        }
-
-        [TestMethod]
-        public void Should_GetAllStrings_ByCaseInsensitiveCultureName()
-        {
-            
-            CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
-
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            // Si la valeur n'est pas trouvée, essayez la culture parente
+            if (localizationFormat.Values.TryGetValue(currentCulture.Parent.Name, out value))
             {
-                DefaultCulture = new CultureInfo("fr-FR")
-            });
+                isParent = true;
+            }
+            else
+            {
+                // Essayez de trouver une valeur par défaut (chaîne vide)
+                if (localizationFormat.Values.TryGetValue(string.Empty, out value))
+                {
+                    isParent = true;
+                }
+                // Si aucune valeur n'est trouvée, essayez la culture par défaut
+                else if (_options.DefaultCulture != null &&
+                         localizationFormat.Values.TryGetValue(_options.DefaultCulture.Name, out value))
+                {
+                    isParent = true;
+                }
+            }
 
-            string[] expected = new[] {
-                "Mon Nom de Base 1",
-                "Mon Nom de Base 2",
-                "French"
+            return new LocalizatedFormat()
+            {
+                IsParent = isParent,
+                Value = value
             };
-            LocalizedString result = localizer.GetString("BaseName1");
-
-            string[] results = localizer.GetAllStrings().Select(x => x.Value).ToArray();
-            CollectionAssert.AreEquivalent(expected, results);
-        }
-
-        [TestMethod]
-        public void Should_SwitchCulture_WithoutReloadingLocalizer()
-        {
-            CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
-
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("fr-FR")
-            });
-
-            LocalizedString result = localizer.GetString("BaseName1");
-
-            Assert.AreEqual("Mon Nom de Base 1", result);
-
-            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
-
-            result = localizer.GetString("BaseName1");
-
-            Assert.AreEqual("My Base Name 1", result);
-        }
-        
-        [TestMethod]
-        public void Should_SwitchCulture_FromWithCulture()
-        {
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
-            {
-                DefaultCulture = new CultureInfo("fr-FR")
-            });
-
-            localizer.WithCulture(new CultureInfo("en-US"));
-            var result = localizer.GetString("BaseName1");
-
-            Assert.AreEqual("My Base Name 1", result);
         }
     }
 }

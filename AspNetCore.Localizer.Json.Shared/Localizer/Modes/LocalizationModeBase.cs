@@ -14,20 +14,21 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             new ConcurrentDictionary<string, LocalizatedFormat>();
 
         protected JsonLocalizationOptions _options;
-        
+
         protected void AddOrUpdateLocalizedValue<T>(LocalizatedFormat localizedValue, KeyValuePair<string, T> temp)
         {
-            if (!(localizedValue.Value is null))
+            // Skip if the localized value is null
+            if (localizedValue.Value is null)
             {
-                if (!localization.ContainsKey(temp.Key))
-                {
-                    localization.TryAdd(temp.Key, localizedValue);
-                }
-                else if (localization[temp.Key].IsParent)
-                {
-                    localization[temp.Key] = localizedValue;
-                }
+                return;
             }
+
+            // Use GetOrAdd to avoid multiple accesses
+            localization.AddOrUpdate(
+                temp.Key,
+                localizedValue,
+                (key, existingValue) => existingValue.IsParent ? localizedValue : existingValue
+            );
         }
     }
 }

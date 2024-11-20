@@ -8,11 +8,31 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
     public static class LocalisationModeHelpers
     {
-        public static ConcurrentDictionary<T, U> ReadAndDeserializeFile<T,U>(string file, Encoding encoding)
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions()
         {
-            return 
-                JsonSerializer.Deserialize<ConcurrentDictionary<T, U>>(
-                    File.ReadAllText(file, encoding), new JsonSerializerOptions() { ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true});
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true
+        };
+
+        public static ConcurrentDictionary<T, U> ReadAndDeserializeFile<T, U>(string file, Encoding encoding)
+        {
+            try
+            {
+                using FileStream stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: false);
+                using StreamReader reader = new StreamReader(stream, encoding);
+                
+                string content = reader.ReadToEnd();
+                
+                return JsonSerializer.Deserialize<ConcurrentDictionary<T, U>>(content, JsonOptions);
+            }
+            catch (IOException ioEx)
+            {
+                throw new IOException($"Error reading file '{file}'", ioEx);
+            }
+            catch (JsonException jsonEx)
+            {
+                throw new JsonException($"Error deserializing JSON from file '{file}'", jsonEx);
+            }
         }
     }
 }

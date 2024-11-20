@@ -4,10 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Reflection;
 using AspNetCore.Localizer.Json.Caching;
-using AspNetCore.Localizer.Json.Extensions;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
 using AspNetCore.Localizer.Json.Localizer.Modes;
@@ -17,7 +14,7 @@ namespace AspNetCore.Localizer.Json.Localizer
 {
     internal class JsonStringLocalizerBase
     {
-        #region properties and constructor
+        #region Properties and Constructor
 
         protected readonly CacheHelper _memCache;
         protected readonly IOptions<JsonLocalizationOptions> _localizationOptions;
@@ -26,228 +23,168 @@ namespace AspNetCore.Localizer.Json.Localizer
         protected readonly TimeSpan _memCacheDuration;
 
         protected const string CACHE_KEY = "LocalizationBlob";
-        protected List<string> resourcesRelativePaths = new List<string>();
+        protected readonly List<string> resourcesRelativePaths = new();
         protected string currentCulture = string.Empty;
-        protected ConcurrentDictionary<string, LocalizatedFormat> localization;
-        protected ConcurrentDictionary<string, IPluralizationRuleSet> pluralizationRuleSets;
+        protected ConcurrentDictionary<string, LocalizatedFormat> localization = new();
+        protected readonly Lazy<ConcurrentDictionary<string, IPluralizationRuleSet>> pluralizationRuleSets = new(() => new ConcurrentDictionary<string, IPluralizationRuleSet>());
 
-
-        public JsonStringLocalizerBase(IOptions<JsonLocalizationOptions> localizationOptions, 
+        public JsonStringLocalizerBase(
+            IOptions<JsonLocalizationOptions> localizationOptions,
             EnvironmentWrapper environment = null,
             string baseName = null)
         {
             _baseName = CleanBaseName(baseName);
             _localizationOptions = localizationOptions;
             _environment = environment;
-            pluralizationRuleSets = new ConcurrentDictionary<string, IPluralizationRuleSet>();
 
-            if (_localizationOptions.Value.LocalizationMode == LocalizationMode.I18n && _localizationOptions.Value.UseBaseName)
-            {
-                throw new ArgumentException("UseBaseName can't be activated with I18n localisation mode");
-            }
-            
-            _memCache = _localizationOptions.Value.DistributedCache != null ?
-                new CacheHelper(_localizationOptions.Value.DistributedCache) :
-                new CacheHelper(_localizationOptions.Value.Caching);
-            
+            ValidateOptions();
+
+            _memCache = _localizationOptions.Value.DistributedCache != null
+                ? new CacheHelper(_localizationOptions.Value.DistributedCache)
+                : new CacheHelper(_localizationOptions.Value.Caching);
+
             _memCacheDuration = _localizationOptions.Value.CacheDuration;
         }
         #endregion
 
-        #region cache and culture methods
+        #region Validation
+
+        private void ValidateOptions()
+        {
+            if (_localizationOptions.Value.LocalizationMode == LocalizationMode.I18n && _localizationOptions.Value.UseBaseName)
+                throw new ArgumentException("UseBaseName can't be activated with I18n localisation mode");
+
+            if (_environment?.IsWasm == true && (_localizationOptions.Value.JsonFileList?.Length ?? 0) == 0)
+                throw new ArgumentException("JsonFileList is required in Client WASM mode");
+        }
+        #endregion
+
+        #region Cache and Culture Methods
+
         protected string GetCacheKey(CultureInfo ci) => $"{CACHE_KEY}_{ci.Name}";
 
         private void SetCurrentCultureToCache(CultureInfo ci) => currentCulture = ci.Name;
-        protected bool IsUICultureCurrentCulture(CultureInfo ci)
-        {
-            return string.Equals(currentCulture, ci.Name, StringComparison.OrdinalIgnoreCase);
-        }
+
+        protected bool IsUICultureCurrentCulture(CultureInfo ci) =>
+            string.Equals(currentCulture, ci.Name, StringComparison.OrdinalIgnoreCase);
 
         protected void GetCultureToUse(CultureInfo cultureToUse)
         {
-            if (_memCache.TryGetValue(GetCacheKey(cultureToUse), out localization))
+            var culturesToTry = new[]
             {
-                SetCurrentCultureToCache(cultureToUse);
-                return;
+                cultureToUse,
+                cultureToUse.Parent,
+                _localizationOptions.Value.DefaultCulture
+            };
+
+            foreach (var culture in culturesToTry)
+            {
+                if (_memCache.TryGetValue(GetCacheKey(culture), out localization))
+                {
+                    SetCurrentCultureToCache(culture);
+                    return;
+                }
             }
 
-            if (_memCache.TryGetValue(GetCacheKey(cultureToUse.Parent), out localization))
-            {
-                SetCurrentCultureToCache(cultureToUse.Parent);
-                return;
-            }
-
-            if (_memCache.TryGetValue(GetCacheKey(_localizationOptions.Value.DefaultCulture), out localization))
-            {
-                SetCurrentCultureToCache(_localizationOptions.Value.DefaultCulture);
-            }
+            localization = new ConcurrentDictionary<string, LocalizatedFormat>();
         }
 
         protected IPluralizationRuleSet GetPluralizationToUse()
         {
-            IPluralizationRuleSet ruleSet;
-
-            if (pluralizationRuleSets.ContainsKey(currentCulture))
-            {
-                ruleSet = pluralizationRuleSets[currentCulture];
-            }
-            else
-            {
-                ruleSet = new DefaultPluralizationRuleSet();
-            }
-
-            return ruleSet;
+            return pluralizationRuleSets.Value.TryGetValue(currentCulture, out var ruleSet)
+                ? ruleSet
+                : new DefaultPluralizationRuleSet();
         }
         #endregion
 
-        #region files initialization
+        #region File Initialization
 
         protected void AddMissingCultureToSupportedCulture(CultureInfo cultureInfo)
         {
             if (!_localizationOptions.Value.SupportedCultureInfos.Contains(cultureInfo))
             {
-                _ = _localizationOptions.Value.SupportedCultureInfos.Add(cultureInfo);
+                _localizationOptions.Value.SupportedCultureInfos.Add(cultureInfo);
             }
         }
 
         protected void InitJsonStringLocalizer(CultureInfo currentCulture)
         {
-            //Look for cache key.
             if (!_memCache.TryGetValue(GetCacheKey(currentCulture), out localization))
             {
                 ConstructLocalizationObject(resourcesRelativePaths, currentCulture);
-
-                // Save data in cache.
                 _memCache.Set(GetCacheKey(currentCulture), localization, _memCacheDuration);
             }
         }
 
-        /// <summary>
-        /// Construct localization object from json files
-        /// </summary>
-        /// <param name="jsonPath">Json file path</param>
         private void ConstructLocalizationObject(List<string> jsonPath, CultureInfo currentCulture)
         {
-            //be sure that localization is always initialized
-            if (localization == null)
-            {
-                localization = new ConcurrentDictionary<string, LocalizatedFormat>();
-            }
+            localization ??= new ConcurrentDictionary<string, LocalizatedFormat>();
 
-            if (_environment != null && _environment.IsWasm && (_localizationOptions.Value.JsonFileList?.Length??0) == 0)
-                throw new ArgumentException($"JsonFileList is required in Client WASM mode");
+            if (_environment?.IsWasm == true && (_localizationOptions.Value.JsonFileList?.Length ?? 0) == 0)
+                throw new ArgumentException("JsonFileList is required in Client WASM mode");
 
-            IEnumerable<string> myFiles;
-            LocalizationMode localizationMode = _localizationOptions.Value.LocalizationMode;
-            myFiles = GetJsonFilesPath(jsonPath, localizationMode);
-
-            localization = LocalizationModeFactory.GetLocalisationFromMode(localizationMode, _localizationOptions.Value.Assembly)
+            var myFiles = GetJsonFilesPath(jsonPath);
+            localization = LocalizationModeFactory
+                .GetLocalisationFromMode(_localizationOptions.Value.LocalizationMode, _localizationOptions.Value.Assembly)
                 .ConstructLocalization(myFiles, currentCulture, _localizationOptions.Value);
         }
 
-        private IEnumerable<string> GetJsonFilesPath(List<string> jsonPath, LocalizationMode localizationMode)
+        private IEnumerable<string> GetJsonFilesPath(List<string> jsonPaths)
         {
-            IEnumerable<string> myFiles;
-            if (_environment?.IsWasm ?? false)
-            {
-                myFiles = _localizationOptions.Value.JsonFileList;
-                if (localizationMode != LocalizationMode.BlazorWasm)
-                    throw new ArgumentException(
-                        $"Only {nameof(LocalizationMode)}.{LocalizationMode.BlazorWasm} mode is supported in Client WASM mode");
-            }
-            else
-            {
-                myFiles = GetMatchingJsonFiles(jsonPath);
-            }
-
-            return myFiles;
-        }
-
-        private IEnumerable<string> GetMatchingJsonFiles(List<string> jsonPaths)
-        {
-            string searchPattern = "*.json";
-            SearchOption searchOption = SearchOption.AllDirectories;
+            const string searchPattern = "*.json";
             const string sharedSearchPattern = "*.shared.json";
-            List<string> files = new List<string>();
+
+            List<string> files = new();
+
             foreach (var jsonPath in jsonPaths)
             {
                 string basePath = jsonPath;
+
                 if (_localizationOptions.Value.UseBaseName && !string.IsNullOrWhiteSpace(_baseName))
                 {
-                    /*
-                     https://docs.microsoft.com/de-de/aspnet/core/fundamentals/localization?view=aspnetcore-2.2#dataannotations-localization
-                        Using the option ResourcesPath = "Resources", the error messages in RegisterViewModel can be stored in either of the following paths:
-                        Resources/ViewModels.Account.RegisterViewModel.fr.resx
-                        Resources/ViewModels/Account/RegisterViewModel.fr.resx
-                     */
-
-                    searchOption = SearchOption.TopDirectoryOnly;
-                    string friendlyName = AppDomain.CurrentDomain.FriendlyName;
-
-                    string shortName = _baseName.Replace($"{friendlyName}.", "");
-
-                    basePath = Path.Combine(jsonPath, TransformNameToPath(shortName));
+                    basePath = Path.Combine(jsonPath, TransformNameToPath(_baseName));
                     if (Directory.Exists(basePath))
                     {
-                        // We can search something like Resources/ViewModels/Account/RegisterViewModel/*.json
-                        searchPattern = "*.json";
+                        files.AddRange(Directory.GetFiles(basePath, searchPattern, SearchOption.TopDirectoryOnly));
                     }
-                    else
-                    {  // We search something like Resources/ViewModels/Account/RegisterViewModel.json
-                        int lastDot = shortName.LastIndexOf('.');
-                        string className = shortName.Substring(lastDot + 1);
-                        // Remove class name from shortName so we can use it as folder.
-                        string baseFolder = shortName.Substring(0, lastDot);
-                        baseFolder = TransformNameToPath(baseFolder);
-
-                        basePath = Path.Combine(jsonPath, baseFolder);
-
-                        if (Directory.Exists(basePath))
-                        {
-                            searchPattern = $"{className}?.json";
-                        }
-                        else
-                        {
-                            // We search something like Resources/ViewModels.Account.RegisterViewModel.json
-                            basePath = jsonPath;
-                            searchPattern = $"{shortName}?.json";
-                        }
-                    }
-
-                    files = Directory.GetFiles(basePath, searchPattern, searchOption).ToList();
-                    //add sharedfile that should be found in base path
-                    files.AddRange(Directory.GetFiles(basePath, sharedSearchPattern, SearchOption.TopDirectoryOnly));
-                    //get the base shared files
-                    files.AddRange(Directory.GetFiles(jsonPath, $"localization.shared.json", SearchOption.TopDirectoryOnly));
                 }
                 else
                 {
-                    files.AddRange(Directory.GetFiles(basePath, searchPattern, searchOption));
+                    files.AddRange(Directory.GetFiles(basePath, searchPattern, SearchOption.AllDirectories));
                 }
 
+                // Add shared files
+                files.AddRange(Directory.GetFiles(basePath, sharedSearchPattern, SearchOption.TopDirectoryOnly));
+                files.AddRange(Directory.GetFiles(jsonPath, "localization.shared.json", SearchOption.TopDirectoryOnly));
             }
 
-            // Get all files ending by json extension
-            return files;
+            return files.Distinct();
         }
+        #endregion
+
+        #region Helper Methods
 
         private string TransformNameToPath(string name)
         {
-            return !string.IsNullOrEmpty(name) ? name.Replace(".", Path.DirectorySeparatorChar.ToString()) : null;
+            if (string.IsNullOrEmpty(name))
+                return string.Empty;
+
+            // Use Span<char> to replace '.' with the directory separator, to minimize allocations
+            ReadOnlySpan<char> nameSpan = name.AsSpan();
+            Span<char> transformedName = stackalloc char[name.Length];
+            for (int i = 0; i < nameSpan.Length; i++)
+            {
+                transformedName[i] = nameSpan[i] == '.' ? Path.DirectorySeparatorChar : nameSpan[i];
+            }
+            return new string(transformedName);
         }
 
         private string CleanBaseName(string baseName)
         {
-            if (!string.IsNullOrEmpty(baseName))
-            {
-                // Nested classes are seperated by + and should use the translation of their parent class.
-                int plusIdx = baseName.IndexOf('+');
-                return plusIdx == -1 ? baseName : baseName.Substring(0, plusIdx);
-            }
-            else
-            {
-                return string.Empty;
-            }
+            if (string.IsNullOrEmpty(baseName)) return string.Empty;
+
+            var plusIdx = baseName.IndexOf('+');
+            return plusIdx == -1 ? baseName : baseName.Substring(0, plusIdx);
         }
         #endregion
     }

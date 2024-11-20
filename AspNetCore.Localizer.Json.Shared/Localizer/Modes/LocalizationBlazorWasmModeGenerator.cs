@@ -4,86 +4,97 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
+using AspNetCore.Localizer.Json.Localizer.Modes;
 
-
-namespace AspNetCore.Localizer.Json.Localizer.Modes
+internal class LocalizationBlazorWasmModeGenerator : LocalizationI18NModeGenerator
 {
-    internal class LocalizationBlazorWasmModeGenerator : LocalizationI18NModeGenerator
+    private readonly Assembly resourceAssembly;
+
+    public LocalizationBlazorWasmModeGenerator(Assembly resourceAssembly)
     {
-        private readonly Assembly resourceAssembly;
+        this.resourceAssembly = resourceAssembly;
+    }
 
-        public LocalizationBlazorWasmModeGenerator(Assembly resourceAssembly)
+    public new ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(IEnumerable<string> myFiles,
+        CultureInfo currentCulture,
+        JsonLocalizationOptions options)
+    {
+        _options = options;
+
+        var filesList = myFiles.ToList();
+        bool isInvariantCulture = currentCulture.Equals(CultureInfo.InvariantCulture);
+
+        if (isInvariantCulture)
         {
-            this.resourceAssembly = resourceAssembly;
-        }
+            // If the culture is invariant, directly check for neutral files
+            var neutralFiles = filesList
+                .Where(file => Path.GetFileName(file).Count(s => s == '.') == 1)
+                .ToList();
 
-        public new ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(IEnumerable<string> myFiles,
-            CultureInfo currentCulture,
-            JsonLocalizationOptions options)
-        {
-            _options = options;
-
-            var enumerable = myFiles as string[] ?? myFiles.ToArray();
-            var neutralFiles = enumerable.Where(file => Path.GetFileName(file)
-                .Count(s => s.CompareTo('.') == 0) == 1).ToList();
-            var isInvariantCulture =
-                currentCulture.DisplayName == CultureInfo.InvariantCulture.ThreeLetterISOLanguageName;
-
-            var files = isInvariantCulture
-                ? new string[] { }
-                : enumerable.Where(file => Path.GetFileName(file).Split('.').Any(
-                    s => (s.IndexOf(currentCulture.Name, StringComparison.OrdinalIgnoreCase) >= 0
-                          || s.IndexOf(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase) >= 0)
-                )).ToArray();
-
-            if (files.Any() && !isInvariantCulture)
+            if (neutralFiles.Any())
             {
-                foreach (var file in files)
+                foreach (var neutralFile in neutralFiles)
                 {
-                    var fileName = Path.GetFileName(file);
-                    var fileCulture = new CultureInfo(fileName.Split('.')[^2] ?? String.Empty);
-
-                    var isParent =
-                        fileCulture.Name.Equals(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase);
- 
-                    if (fileCulture.Name.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
-                        isParent && fileCulture.Name != "json")
-                    {
-                        AddValueToLocalization(options, file, isParent);
-                    }
-                }
-            }
-            else
-            {
-                if (neutralFiles.Any())
-                {
-                    foreach (var neutralFile in neutralFiles)
-                        AddValueToLocalization(options, neutralFile, true); 
+                    AddValueToLocalization(options, neutralFile, true);
                 }
             }
 
             return localization;
         }
 
-        public static T ExecuteSynchronously<T>(Func<Task<T>> taskFunc)
+        // Handle culture-specific files
+        var cultureSpecificFiles = filesList
+            .Where(file => IsCultureFileForCurrentOrParent(file, currentCulture))
+            .ToList();
+
+        if (cultureSpecificFiles.Any())
         {
-            var capturedContext = SynchronizationContext.Current;
-            try
+            foreach (var file in cultureSpecificFiles)
             {
-                SynchronizationContext.SetSynchronizationContext(null);
-                return taskFunc.Invoke().GetAwaiter().GetResult();
-            }
-            finally
-            {
-                SynchronizationContext.SetSynchronizationContext(capturedContext);
+                string fileName = Path.GetFileName(file);
+                string cultureName = GetCultureNameFromFile(fileName);
+                if (!string.IsNullOrEmpty(cultureName))
+                {
+                    var fileCulture = new CultureInfo(cultureName);
+                    bool isParent = fileCulture.Name.Equals(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase);
+
+                    if (fileCulture.Name.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
+                        (isParent && fileCulture.Name != "json"))
+                    {
+                        AddValueToLocalization(options, file, isParent);
+                    }
+                }
             }
         }
+
+        return localization;
+    }
+
+    private static string GetCultureNameFromFile(string fileName)
+    {
+        // Optimized to avoid unnecessary allocations
+        ReadOnlySpan<char> fileNameSpan = fileName.AsSpan();
+        int lastDotIndex = fileNameSpan.LastIndexOf('.');
+        if (lastDotIndex > 0)
+        {
+            int secondLastDotIndex = fileNameSpan.Slice(0, lastDotIndex).LastIndexOf('.');
+            if (secondLastDotIndex >= 0)
+            {
+                return fileNameSpan.Slice(secondLastDotIndex + 1, lastDotIndex - secondLastDotIndex - 1).ToString();
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static bool IsCultureFileForCurrentOrParent(string file, CultureInfo currentCulture)
+    {
+        // Method to check if the file is related to the current culture or its parent
+        string fileName = Path.GetFileName(file);
+        return fileName.Contains(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
+               fileName.Contains(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase);
     }
 }
