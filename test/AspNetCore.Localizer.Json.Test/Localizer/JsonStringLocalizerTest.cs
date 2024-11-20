@@ -47,7 +47,6 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             bool isParent = false;
             string value = null;
 
-            // Essayez de trouver la valeur pour la culture actuelle
             if (localizationFormat.Values.TryGetValue(currentCulture.Name, out value))
             {
                 return new LocalizatedFormat()
@@ -57,19 +56,16 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 };
             }
 
-            // Si la valeur n'est pas trouvée, essayez la culture parente
             if (localizationFormat.Values.TryGetValue(currentCulture.Parent.Name, out value))
             {
                 isParent = true;
             }
             else
             {
-                // Essayez de trouver une valeur par défaut (chaîne vide)
                 if (localizationFormat.Values.TryGetValue(string.Empty, out value))
                 {
                     isParent = true;
                 }
-                // Si aucune valeur n'est trouvée, essayez la culture par défaut
                 else if (_options.DefaultCulture != null &&
                          localizationFormat.Values.TryGetValue(_options.DefaultCulture.Name, out value))
                 {
