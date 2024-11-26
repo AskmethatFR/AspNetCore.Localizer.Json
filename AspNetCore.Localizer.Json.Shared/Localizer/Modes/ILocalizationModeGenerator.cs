@@ -8,7 +8,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
     internal interface ILocalizationModeGenerator
     {
-        ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(
+        Dictionary<string, LocalizatedFormat> ConstructLocalization(
             IEnumerable<string> myFiles, CultureInfo currentCulture, JsonLocalizationOptions options);
 
     }

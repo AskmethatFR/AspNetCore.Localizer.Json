@@ -25,8 +25,8 @@ namespace AspNetCore.Localizer.Json.Localizer
         protected const string CACHE_KEY = "LocalizationBlob";
         protected readonly List<string> resourcesRelativePaths = new();
         protected string currentCulture = string.Empty;
-        protected ConcurrentDictionary<string, LocalizatedFormat> localization = new();
-        protected readonly Lazy<ConcurrentDictionary<string, IPluralizationRuleSet>> pluralizationRuleSets = new(() => new ConcurrentDictionary<string, IPluralizationRuleSet>());
+        protected Dictionary<string, LocalizatedFormat> localization = new();
+        protected readonly Lazy<Dictionary<string, IPluralizationRuleSet>> pluralizationRuleSets = new(() => new Dictionary<string, IPluralizationRuleSet>());
 
         public JsonStringLocalizerBase(
             IOptions<JsonLocalizationOptions> localizationOptions,
@@ -86,7 +86,7 @@ namespace AspNetCore.Localizer.Json.Localizer
                 }
             }
 
-            localization = new ConcurrentDictionary<string, LocalizatedFormat>();
+            localization = new Dictionary<string, LocalizatedFormat>();
         }
 
         protected IPluralizationRuleSet GetPluralizationToUse()
@@ -122,7 +122,7 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         private void ConstructLocalizationObject(List<string> jsonPath, CultureInfo currentCulture)
         {
-            localization ??= new ConcurrentDictionary<string, LocalizatedFormat>();
+            localization ??= new Dictionary<string, LocalizatedFormat>();
 
             if (_environment?.IsWasm == true && (_localizationOptions.Value.JsonFileList?.Length ?? 0) == 0)
                 throw new ArgumentException("JsonFileList is required in Client WASM mode");

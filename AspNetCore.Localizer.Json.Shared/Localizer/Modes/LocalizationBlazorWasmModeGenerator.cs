@@ -18,7 +18,7 @@ internal class LocalizationBlazorWasmModeGenerator : LocalizationI18NModeGenerat
         this.resourceAssembly = resourceAssembly;
     }
 
-    public new ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(IEnumerable<string> myFiles,
+    public new Dictionary<string, LocalizatedFormat> ConstructLocalization(IEnumerable<string> myFiles,
         CultureInfo currentCulture,
         JsonLocalizationOptions options)
     {

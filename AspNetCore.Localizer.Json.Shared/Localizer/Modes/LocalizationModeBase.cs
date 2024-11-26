@@ -10,8 +10,8 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
     internal abstract class LocalizationModeBase
     {
-        protected ConcurrentDictionary<string, LocalizatedFormat> localization =
-            new ConcurrentDictionary<string, LocalizatedFormat>();
+        protected Dictionary<string, LocalizatedFormat> localization =
+            new Dictionary<string, LocalizatedFormat>();
 
         protected JsonLocalizationOptions _options;
 
@@ -23,12 +23,18 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 return;
             }
 
-            // Use GetOrAdd to avoid multiple accesses
-            localization.AddOrUpdate(
-                temp.Key,
-                localizedValue,
-                (key, existingValue) => existingValue.IsParent ? localizedValue : existingValue
-            );
+            // Manually add or update to avoid using ConcurrentDictionary
+            if (localization.ContainsKey(temp.Key))
+            {
+                if (localization[temp.Key].IsParent)
+                {
+                    localization[temp.Key] = localizedValue;
+                }
+            }
+            else
+            {
+                localization.Add(temp.Key, localizedValue);
+            }
         }
     }
 }

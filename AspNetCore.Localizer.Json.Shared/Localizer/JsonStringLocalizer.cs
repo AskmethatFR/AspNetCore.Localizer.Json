@@ -15,7 +15,7 @@ namespace AspNetCore.Localizer.Json.Localizer
 {
     internal partial class JsonStringLocalizer : JsonStringLocalizerBase, IJsonStringLocalizer
     {
-        private readonly ConcurrentDictionary<string, IDictionary<string, string>> _missingJsonValues = new();
+        private readonly Dictionary<string, IDictionary<string, string>> _missingJsonValues = new();
         private string _missingTranslations = null;
 
         private static LocalizedString ConvertToChar(string value, char c, int additionalRepeats = 0) =>
@@ -156,7 +156,7 @@ namespace AspNetCore.Localizer.Json.Localizer
             {
                 if (!_missingJsonValues.TryGetValue(cultureName, out var localeMissingValues))
                 {
-                    localeMissingValues = new ConcurrentDictionary<string, string>();
+                    localeMissingValues = new Dictionary<string, string>();
                     _missingJsonValues.TryAdd(cultureName, localeMissingValues);
                 }
 

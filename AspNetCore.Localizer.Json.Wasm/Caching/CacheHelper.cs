@@ -23,7 +23,7 @@ namespace AspNetCore.Localizer.Json.Caching
             _memoryCache = memoryCache;
         }
 
-        public bool TryGetValue(string cacheKey, out ConcurrentDictionary<string, LocalizatedFormat> localization)
+        public bool TryGetValue(string cacheKey, out Dictionary<string, LocalizatedFormat> localization)
         {
             if (_memoryCache != null)
             {
@@ -39,14 +39,14 @@ namespace AspNetCore.Localizer.Json.Caching
                     return false;
                 }
 
-                localization = JsonSerializer.Deserialize<ConcurrentDictionary<string, LocalizatedFormat>>(json);
+                localization = JsonSerializer.Deserialize<Dictionary<string, LocalizatedFormat>>(json);
                 return true;
             }
 
             throw new InvalidOperationException("Both MemoryCache and DistributedCache are null");
         }
 
-        public void Set(string cacheKey, ConcurrentDictionary<string, LocalizatedFormat> localization, TimeSpan cacheDuration)
+        public void Set(string cacheKey, Dictionary<string, LocalizatedFormat> localization, TimeSpan cacheDuration)
         {
             if (_memoryCache == null && _distributedCache == null)
             {

@@ -10,7 +10,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
     internal class LocalizationBasicModeGenerator : LocalizationModeBase, ILocalizationModeGenerator
     {
-        public ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(
+        public Dictionary<string, LocalizatedFormat> ConstructLocalization(
             IEnumerable<string> myFiles, CultureInfo currentCulture, JsonLocalizationOptions options)
         {
             _options = options;

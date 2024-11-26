@@ -22,7 +22,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             };
         }
 
-        public ConcurrentDictionary<string, LocalizatedFormat> ConstructLocalization(
+        public Dictionary<string, LocalizatedFormat> ConstructLocalization(
             IEnumerable<string> myFiles,
             CultureInfo currentCulture,
             JsonLocalizationOptions options)
