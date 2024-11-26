@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -70,24 +69,28 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         protected void GetCultureToUse(CultureInfo cultureToUse)
         {
-            var culturesToTry = new[]
+            if (_memCache.TryGetValue(GetCacheKey(cultureToUse), out localization))
             {
-                cultureToUse,
-                cultureToUse.Parent,
-                _localizationOptions.Value.DefaultCulture
-            };
+                SetCurrentCultureToCache(cultureToUse);
+                return;
+            }
 
-            foreach (var culture in culturesToTry)
+            if (_memCache.TryGetValue(GetCacheKey(cultureToUse.Parent), out localization))
             {
-                if (_memCache.TryGetValue(GetCacheKey(culture), out localization))
-                {
-                    SetCurrentCultureToCache(culture);
-                    return;
-                }
+                SetCurrentCultureToCache(cultureToUse.Parent);
+                return;
+            }
+
+            if (_localizationOptions.Value.DefaultCulture != null &&
+                _memCache.TryGetValue(GetCacheKey(_localizationOptions.Value.DefaultCulture), out localization))
+            {
+                SetCurrentCultureToCache(_localizationOptions.Value.DefaultCulture);
+                return;
             }
 
             localization = new Dictionary<string, LocalizatedFormat>();
         }
+
 
         protected IPluralizationRuleSet GetPluralizationToUse()
         {
@@ -101,23 +104,19 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         protected void AddMissingCultureToSupportedCulture(CultureInfo cultureInfo)
         {
-            if (!_localizationOptions.Value.SupportedCultureInfos.Contains(cultureInfo))
-            {
-                _localizationOptions.Value.SupportedCultureInfos.Add(cultureInfo);
-            }
+            _localizationOptions.Value.SupportedCultureInfos.Add(cultureInfo);
         }
 
         protected bool InitJsonStringLocalizer(CultureInfo currentCulture)
         {
-            _memCache.TryGetValue(GetCacheKey(currentCulture), out localization);
-            var fromMemCache = localization is not null;
-            if (!fromMemCache)
+            if (!_memCache.TryGetValue(GetCacheKey(currentCulture), out localization))
             {
                 ConstructLocalizationObject(resourcesRelativePaths, currentCulture);
                 _memCache.Set(GetCacheKey(currentCulture), localization, _memCacheDuration);
+                return false;
             }
             
-            return fromMemCache;
+            return true;
         }
 
         private void ConstructLocalizationObject(List<string> jsonPath, CultureInfo currentCulture)

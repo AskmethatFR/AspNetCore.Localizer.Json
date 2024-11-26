@@ -27,22 +27,21 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             CultureInfo currentCulture,
             JsonLocalizationOptions options)
         {
-            _options = options;
-
             var filesList = myFiles.ToList();
-            var neutralFiles = filesList
-                .Where(file => Path.GetFileName(file).Count(s => s == '.') == 1)
-                .ToList();
+            bool isInvariantCulture =
+                currentCulture.Name.Equals(CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
 
-            bool isInvariantCulture = currentCulture.Name.Equals(CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
+            // Collect culture-specific and neutral files separately
+            var cultureSpecificFiles = filesList.Where(file =>
+            {
+                var fileName = Path.GetFileName(file);
+                return fileName.Contains(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
+                       (!isInvariantCulture &&
+                        fileName.Contains(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase));
+            }).ToList();
 
-            var cultureSpecificFiles = !isInvariantCulture
-                ? filesList.Where(file => Path.GetFileName(file).Split('.').Any(
-                    s => s.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
-                         s.Equals(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase)))
-                : Enumerable.Empty<string>();
-
-            if (cultureSpecificFiles.Any() && !isInvariantCulture)
+            // If culture-specific files are found, skip loading neutral files
+            if (cultureSpecificFiles.Any())
             {
                 foreach (string file in cultureSpecificFiles)
                 {
@@ -50,7 +49,8 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     if (!string.IsNullOrEmpty(cultureName))
                     {
                         var fileCulture = new CultureInfo(cultureName);
-                        bool isParent = fileCulture.Name.Equals(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase);
+                        bool isParent = fileCulture.Name.Equals(currentCulture.Parent.Name,
+                            StringComparison.OrdinalIgnoreCase);
 
                         if (fileCulture.Name.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
                             (isParent && fileCulture.Name != "json"))
@@ -60,8 +60,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     }
                 }
             }
-            else if (neutralFiles.Any())
+            else
             {
+                // If no culture-specific files, load the neutral files
+                var neutralFiles = filesList.Where(file => Path.GetFileName(file).Count(s => s == '.') == 1);
                 foreach (string neutralFile in neutralFiles)
                 {
                     AddValueToLocalization(options, neutralFile, true);
@@ -70,6 +72,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             return localization;
         }
+
 
         private static string GetCultureNameFromFile(string fileName)
         {
@@ -107,29 +110,43 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             }
         }
 
-        internal void AddValues(JsonElement element, string baseName, bool isParent)
+        private void AddValues(JsonElement element, string baseName, bool isParent)
         {
-            if (element.ValueKind == JsonValueKind.Object)
-            {
-                foreach (JsonProperty property in element.EnumerateObject())
-                {
-                    string currentBaseName = string.IsNullOrEmpty(baseName) ? property.Name : $"{baseName}.{property.Name}";
+            Stack<(JsonElement element, string baseName)> stack = new Stack<(JsonElement, string)>();
+            stack.Push((element, baseName));
 
-                    if (property.Value.ValueKind == JsonValueKind.Object)
+            while (stack.Count > 0)
+            {
+                var (currentElement, currentBaseName) = stack.Pop();
+
+                if (currentElement.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (JsonProperty property in currentElement.EnumerateObject())
                     {
-                        // Call recursively for nested JSON objects
-                        AddValues(property.Value, currentBaseName, isParent);
-                    }
-                    else if (property.Value.ValueKind == JsonValueKind.Array)
-                    {
-                        throw new ArgumentException("Invalid i18n Json");
-                    }
-                    else
-                    {
-                        // Add final key-value pair
-                        string key = currentBaseName;
-                        var localizedValue = GetLocalizedValue(new KeyValuePair<string, string>(key, property.Value.GetString()), isParent);
-                        AddOrUpdateLocalizedValue(localizedValue, new KeyValuePair<string, string>(key, property.Value.ToString()));
+                        var newBaseName = new StringBuilder(currentBaseName);
+                        if (!string.IsNullOrEmpty(currentBaseName))
+                        {
+                            newBaseName.Append('.').Append(property.Name);
+                        }
+                        else
+                        {
+                            newBaseName.Append(property.Name);
+                        }
+
+                        if (property.Value.ValueKind == JsonValueKind.Object)
+                        {
+                            stack.Push((property.Value, newBaseName.ToString()));
+                        }
+                        else if (property.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            throw new ArgumentException("Invalid i18n Json");
+                        }
+                        else
+                        {
+                            string key = newBaseName.ToString();
+                            var localizedValue = GetLocalizedValue(new KeyValuePair<string, string>(key, property.Value.GetString()), isParent);
+                            AddOrUpdateLocalizedValue(localizedValue, new KeyValuePair<string, string>(key, property.Value.ToString()));
+                        }
                     }
                 }
             }
