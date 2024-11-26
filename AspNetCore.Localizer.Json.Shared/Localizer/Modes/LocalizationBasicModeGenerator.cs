@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -58,6 +57,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             bool isParent = false;
             string value = null;
 
+            // Optimized retrieval of value to reduce redundant lookups
             if (localizationFormat.Values.TryGetValue(currentCulture.Name, out value))
             {
                 return new LocalizatedFormat()
@@ -67,21 +67,11 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 };
             }
 
-            if (localizationFormat.Values.TryGetValue(currentCulture.Parent.Name, out value))
+            if (localizationFormat.Values.TryGetValue(currentCulture.Parent.Name, out value) ||
+                localizationFormat.Values.TryGetValue(string.Empty, out value) ||
+                (_options.DefaultCulture != null && localizationFormat.Values.TryGetValue(_options.DefaultCulture.Name, out value)))
             {
                 isParent = true;
-            }
-            else
-            {
-                if (localizationFormat.Values.TryGetValue(string.Empty, out value))
-                {
-                    isParent = true;
-                }
-                else if (_options.DefaultCulture != null &&
-                         localizationFormat.Values.TryGetValue(_options.DefaultCulture.Name, out value))
-                {
-                    isParent = true;
-                }
             }
 
             return new LocalizatedFormat()

@@ -23,10 +23,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 return;
             }
 
-            // Manually add or update to avoid using ConcurrentDictionary
-            if (localization.ContainsKey(temp.Key))
+            // Optimize dictionary access to minimize redundant lookups
+            if (localization.TryGetValue(temp.Key, out var existingValue))
             {
-                if (localization[temp.Key].IsParent)
+                if (existingValue.IsParent)
                 {
                     localization[temp.Key] = localizedValue;
                 }

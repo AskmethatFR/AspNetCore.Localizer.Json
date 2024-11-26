@@ -3,7 +3,6 @@ using AspNetCore.Localizer.Json.Extensions;
 using AspNetCore.Localizer.Json.Format;
 using Microsoft.Extensions.Localization;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -31,11 +30,14 @@ namespace AspNetCore.Localizer.Json.Localizer
                 return ConvertToChar(name, 'X');
 
             string format = GetString(name);
+            if (format == null)
+                return new LocalizedString(name, name, resourceNotFound: true);
+
             string value = arguments.Length > 0
                 ? GetPluralLocalization(name, format, arguments)
-                : (format ?? name);
+                : format;
 
-            return new LocalizedString(name, value, resourceNotFound: format == null);
+            return new LocalizedString(name, value, resourceNotFound: false);
         }
 
         private string GetPluralLocalization(string name, string format, object[] arguments)
@@ -45,11 +47,12 @@ namespace AspNetCore.Localizer.Json.Localizer
                 string value = GetString(name);
                 if (!string.IsNullOrEmpty(value) && value.Contains(_localizationOptions.Value.PluralSeparator))
                 {
-                    return value.Split(_localizationOptions.Value.PluralSeparator)[isPlural ? 1 : 0];
+                    var parts = value.Split(_localizationOptions.Value.PluralSeparator);
+                    return parts.Length > 1 ? parts[isPlural ? 1 : 0] : value;
                 }
             }
 
-            return string.Format(format ?? name, arguments);
+            return string.Format(format, arguments);
         }
 
         public LocalizedString GetPlural(string name, double count, params object[] arguments)
@@ -64,40 +67,44 @@ namespace AspNetCore.Localizer.Json.Localizer
             string nameWithRule = name + "." + applicableRule;
 
             // Attempt to get the localized format
-            string format = localization?.TryGetValue(nameWithRule, out var localizedValue) == true
-                ? localizedValue.Value
-                : null;
-
-            // If the specific rule is not found, try the "Other" rule or fallback
-            string fallback = null;
-            if (format == null)
+            if (localization?.TryGetValue(nameWithRule, out var localizedValue) == true)
             {
-                string nameWithOtherRule = name + "." + PluralizationConstants.Other;
-                format = localization?.TryGetValue(nameWithOtherRule, out var localizedOtherValue) == true
-                    ? localizedOtherValue.Value
-                    : (fallback = GetString(name, true)); // Avoid multiple calls
+                return FormatLocalizedString(name, localizedValue.Value, count, arguments);
             }
 
-            format ??= fallback;
+            // If the specific rule is not found, try the "Other" rule or fallback
+            string nameWithOtherRule = name + "." + PluralizationConstants.Other;
+            if (localization?.TryGetValue(nameWithOtherRule, out var localizedOtherValue) == true)
+            {
+                return FormatLocalizedString(name, localizedOtherValue.Value, count, arguments);
+            }
 
-            // Prepare arguments with `count` as the first element using an optimized list allocation
-            var argumentsWithCount = new object[arguments.Length + 1];
+            string fallback = GetString(name, true);
+            return FormatLocalizedString(name, fallback ?? name, count, arguments, fallback == null);
+        }
+
+        private LocalizedString FormatLocalizedString(string name, string format, double count, object[] arguments, bool resourceNotFound = false)
+        {
+            // unshift the count to the arguments array
+            object[] argumentsWithCount = new object[arguments.Length + 1];
             argumentsWithCount[0] = count;
+
+            // copy the rest of the arguments
             Array.Copy(arguments, 0, argumentsWithCount, 1, arguments.Length);
 
-            // Format the final localized string
-            string value = string.Format(format ?? name, argumentsWithCount);
-
-            // Return the localized string with an indicator if the format was found
-            return new LocalizedString(name, value, format != null);
+            // format the string
+            string value = string.Format(format, argumentsWithCount);
+            return new LocalizedString(name, value, resourceNotFound);
         }
 
         private CultureInfo InitCorrectJsonCulture(bool shouldTryDefaultCulture = false)
         {
             // Initialize the culture if needed
             var culture = CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.CurrentUICulture;
-            culture = IsUICultureCurrentCulture(culture) ? CultureInfo.CurrentUICulture : culture;
-            InitJsonFromCulture(culture);
+            if (!IsUICultureCurrentCulture(culture))
+            {
+                InitJsonFromCulture(culture);
+            }
 
             return culture;
         }
@@ -108,29 +115,39 @@ namespace AspNetCore.Localizer.Json.Localizer
 
             return localization?.Where(w => includeParentCultures || !w.Value.IsParent)
                 .Select(l =>
-                    new LocalizedString(l.Key, GetString(l.Key) ?? l.Key, resourceNotFound: GetString(l.Key) == null))
+                    new LocalizedString(l.Key, l.Value.Value ?? l.Key, resourceNotFound: l.Value.Value == null))
                 .OrderBy(s => s.Name);
         }
 
         public IStringLocalizer WithCulture(CultureInfo culture)
         {
-            if (!_localizationOptions.Value.SupportedCultureInfos.Contains(culture))
-                _localizationOptions.Value.SupportedCultureInfos.Add(culture);
+            _localizationOptions.Value.SupportedCultureInfos.Add(culture);
 
             CultureInfo.CurrentCulture = culture;
 
             return new JsonStringLocalizer(_localizationOptions, _env);
         }
 
+        private readonly Dictionary<string, string> _localStringCache = new();
+
         private string GetString(string name, bool shouldTryDefaultCulture = true)
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
 
+            // Check cache before looking up
+            if (_localStringCache.TryGetValue(name, out string cachedValue))
+            {
+                return cachedValue;
+            }
+
             var culture = InitCorrectJsonCulture(true);
 
             if (localization != null && localization.TryGetValue(name, out LocalizatedFormat localizedValue))
+            {
+                _localStringCache[name] = localizedValue.Value; // Cache the result
                 return localizedValue.Value;
+            }
 
             if (shouldTryDefaultCulture)
             {
@@ -141,6 +158,7 @@ namespace AspNetCore.Localizer.Json.Localizer
             HandleMissingTranslation(name, culture);
             return null;
         }
+
 
         private void HandleMissingTranslation(string name, CultureInfo? culture)
         {
