@@ -1,11 +1,24 @@
 ﻿@inherits LayoutComponentBase
 
+@using System.Globalization
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Localization
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
 <div class="sidebar">
     <NavMenu/>
 </div>
 
 <div class="main">
     <div class="top-row px-4">
+        <select @onchange="CultureChanged">
+            <option value="en-US">English</option>
+            <option value="es">Español</option>
+            <option value="fr-FR">Français</option>
+        </select>
+        
+        @(CultureInfo.DefaultThreadCurrentUICulture?.DisplayName ?? CultureInfo.CurrentUICulture.DisplayName)
         <a href="https://docs.microsoft.com/aspnet/" target="_blank">@Localizer["About"]</a>
     </div>
 
@@ -13,3 +26,27 @@
         @Body
     </div>
 </div>
+
+@code {
+    
+    private string _selectedLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+    private async Task CultureChanged(ChangeEventArgs arg)
+    {
+        _selectedLanguage = arg.Value.ToString();
+        var currentUiCulture = CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.CurrentUICulture;
+        if (currentUiCulture.ThreeLetterISOLanguageName != _selectedLanguage)
+        {
+            var selectedCulture = CultureInfo.GetCultureInfo(_selectedLanguage);
+            var uri = new Uri(Navigation.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var cultureEscaped = Uri.EscapeDataString(selectedCulture.Name);
+            var uriEscaped = Uri.EscapeDataString(uri);
+
+            
+            var url = "language/set?culture=" + cultureEscaped + "&fallbackUrl=" + uriEscaped;
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+    }
+
+}

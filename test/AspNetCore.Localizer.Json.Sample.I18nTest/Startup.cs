@@ -35,6 +35,7 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
             services.AddRazorPages()
                 .AddDataAnnotationsLocalization()
                 .AddViewLocalization();
+            services.AddControllers();
             services.AddServerSideBlazor();
             services.AddScoped<WeatherForecastService>();
             
@@ -67,6 +68,8 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 // UI strings that we have localized.
                 options.SupportedUICultures = _supportedCultures;
             });
+            
+            services.AddHttpContextAccessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -83,6 +86,10 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 app.UseHsts();
             }
             
+                        
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+            
             app.UseRequestLocalization(new RequestLocalizationOptions
             {
                 DefaultRequestCulture = _defaultRequestCulture,
@@ -92,14 +99,12 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 SupportedUICultures = _supportedCultures
             });
             
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
+                endpoints.MapControllers();
                 endpoints.MapFallbackToPage("/_Host");
             });
         }

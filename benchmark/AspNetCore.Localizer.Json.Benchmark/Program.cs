@@ -59,7 +59,7 @@ namespace AspNetCore.Localizer.Json.Benchmark
             return _jsonLocalizer.GetString("BaseName1").Value;
         }
 
-        [Benchmark]
+        // [Benchmark]
         public string JsonLocalizerWithCreation()
         {
             var localizer = new JsonStringLocalizer(Options.Create(new JsonLocalizationOptions()
@@ -77,7 +77,7 @@ namespace AspNetCore.Localizer.Json.Benchmark
             return localizer.GetString("BaseName1");
         }
         
-        [Benchmark]
+        // [Benchmark]
         public string I18nJsonLocalizerWithCreation()
         {
             var localizer = new JsonStringLocalizer(Options.Create(new JsonLocalizationOptions()
@@ -94,7 +94,7 @@ namespace AspNetCore.Localizer.Json.Benchmark
             return localizer.GetString("BaseName1");
         }
 
-        [Benchmark]
+        // [Benchmark]
         public string JsonLocalizerWithCreationAndExternalMemoryCache()
         {
             JsonStringLocalizer localizer = new JsonStringLocalizer(Options.Create(new JsonLocalizationOptions()
@@ -112,14 +112,14 @@ namespace AspNetCore.Localizer.Json.Benchmark
             return localizer.GetString("BaseName1");
         }
 
-        [Benchmark]
+        // [Benchmark]
         public string JsonLocalizerDefaultCultureValue()
         {
             CultureInfo.CurrentUICulture = new CultureInfo("pt-PT");
             return _jsonLocalizer.GetString("BaseName1").Value;
         }
 
-        [Benchmark]
+        // [Benchmark]
         public string LocalizerDefaultCultureValue()
         {
             CultureInfo.CurrentUICulture = new CultureInfo("pt-PT");

@@ -54,15 +54,7 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         public LocalizedString GetPlural(string name, double count, params object[] arguments)
         {
-            // Initialize the culture if needed
-            if (!IsUICultureCurrentCulture(CultureInfo.CurrentUICulture))
-            {
-                InitJsonFromCulture(CultureInfo.CurrentUICulture);
-            }
-            else
-            {
-                InitJsonFromCulture(_localizationOptions.Value.DefaultCulture);
-            }
+            InitCorrectJsonCulture();
 
             // Retrieve the pluralization rule set for the current culture
             IPluralizationRuleSet pluralizationRuleSet = GetPluralizationToUse();
@@ -100,9 +92,19 @@ namespace AspNetCore.Localizer.Json.Localizer
             return new LocalizedString(name, value, format != null);
         }
 
+        private CultureInfo InitCorrectJsonCulture(bool shouldTryDefaultCulture = false)
+        {
+            // Initialize the culture if needed
+            var culture = CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.CurrentUICulture;
+            culture = IsUICultureCurrentCulture(culture) ? CultureInfo.CurrentUICulture : culture;
+            InitJsonFromCulture(culture);
+
+            return culture;
+        }
+
         public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures)
         {
-            InitJsonFromCulture(CultureInfo.CurrentUICulture);
+            InitCorrectJsonCulture();
 
             return localization?.Where(w => includeParentCultures || !w.Value.IsParent)
                 .Select(l =>
@@ -125,12 +127,7 @@ namespace AspNetCore.Localizer.Json.Localizer
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
 
-            CultureInfo? culture = shouldTryDefaultCulture && !IsUICultureCurrentCulture(CultureInfo.CurrentUICulture)
-                ? CultureInfo.CurrentUICulture
-                : null;
-
-            if (culture != null)
-                InitJsonFromCulture(culture);
+            var culture = InitCorrectJsonCulture(true);
 
             if (localization != null && localization.TryGetValue(name, out LocalizatedFormat localizedValue))
                 return localizedValue.Value;
@@ -176,9 +173,12 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         private void InitJsonFromCulture(CultureInfo cultureInfo)
         {
-            InitJsonStringLocalizer(cultureInfo);
-            AddMissingCultureToSupportedCulture(cultureInfo);
-            GetCultureToUse(cultureInfo);
+            var isFromMemCache = InitJsonStringLocalizer(cultureInfo);
+            if (!isFromMemCache)
+            {
+                AddMissingCultureToSupportedCulture(cultureInfo);
+                GetCultureToUse(cultureInfo);
+            }
         }
 
         public void ClearMemCache(IEnumerable<CultureInfo> culturesToClearFromCache = null)

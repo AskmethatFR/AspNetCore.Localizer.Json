@@ -107,13 +107,17 @@ namespace AspNetCore.Localizer.Json.Localizer
             }
         }
 
-        protected void InitJsonStringLocalizer(CultureInfo currentCulture)
+        protected bool InitJsonStringLocalizer(CultureInfo currentCulture)
         {
-            if (!_memCache.TryGetValue(GetCacheKey(currentCulture), out localization))
+            _memCache.TryGetValue(GetCacheKey(currentCulture), out localization);
+            var fromMemCache = localization is not null;
+            if (!fromMemCache)
             {
                 ConstructLocalizationObject(resourcesRelativePaths, currentCulture);
                 _memCache.Set(GetCacheKey(currentCulture), localization, _memCacheDuration);
             }
+            
+            return fromMemCache;
         }
 
         private void ConstructLocalizationObject(List<string> jsonPath, CultureInfo currentCulture)

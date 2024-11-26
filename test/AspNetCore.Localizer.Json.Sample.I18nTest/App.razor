@@ -1,3 +1,12 @@
+@using System.Globalization
+@using System.Threading
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Localization
+
+@inject IJSRuntime Js
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
@@ -8,3 +17,24 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var cultureCookie = HttpContextAccessor.HttpContext.Request.Cookies[CookieRequestCultureProvider.DefaultCookieName];
+            //cookie is  c=en-US|uic=en-US is an invalid culture identifier.
+            var culture = cultureCookie?.Split('|').FirstOrDefault()?.Split('=')?.LastOrDefault();
+            
+            var selectedCulture = new CultureInfo(culture ?? "en-US");
+            CultureInfo.DefaultThreadCurrentCulture = selectedCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = selectedCulture;
+            CultureInfo.CurrentCulture = selectedCulture;
+            CultureInfo.CurrentUICulture = selectedCulture;
+            Thread.CurrentThread.CurrentUICulture = selectedCulture;
+            Thread.CurrentThread.CurrentCulture = selectedCulture;
+            StateHasChanged();
+        }
+    }
+}
