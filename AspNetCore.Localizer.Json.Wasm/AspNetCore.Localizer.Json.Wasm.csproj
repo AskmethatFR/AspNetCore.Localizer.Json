@@ -2,10 +2,10 @@
 
     <PropertyGroup>
         <LangVersion>Latest</LangVersion>
-	</PropertyGroup>
+    </PropertyGroup>
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>AspNetCore.Localizer.Json.Wasm</PackageId>
         <PackageVersion>$(Version)</PackageVersion>
         <Authors>Askmethat</Authors>
@@ -21,6 +21,7 @@
         <RepositoryUrl>https://github.com/AskmethatFR/AspNetCore.Localizer.Json</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <MicrosoftExtensionsVersion>[8.0.0,8.1.0)</MicrosoftExtensionsVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,21 +29,21 @@
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5.0|AnyCPU'">
-      <DefineConstants>$(DefineConstants)TRACE;NETCORE</DefineConstants>
+        <DefineConstants>$(DefineConstants)TRACE;NETCORE</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net5.0|AnyCPU'">
-      <DefineConstants>$(DefineConstants)TRACE;NETCORE</DefineConstants>
+        <DefineConstants>$(DefineConstants)TRACE;NETCORE</DefineConstants>
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components" Version="9.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.0" />
-		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components" Version="$(MicrosoftExtensionsVersion)"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftExtensionsVersion)"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="$(MicrosoftExtensionsVersion)"/>
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsVersion)"/>
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="$(MicrosoftExtensionsVersion)"/>
+        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="$(MicrosoftExtensionsVersion)"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -55,5 +56,5 @@
             <_Parameter1>$(MSBuildProjectName).Benchmark</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
-    <Import Project="..\AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems" Label="Shared" />
+    <Import Project="..\AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems" Label="Shared"/>
 </Project>

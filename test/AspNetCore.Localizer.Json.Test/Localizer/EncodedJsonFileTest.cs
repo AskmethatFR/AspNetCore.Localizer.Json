@@ -50,7 +50,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
 
             LocalizedString result = localizer.GetString("Name1");
 
-            Assert.AreEqual("Eu so joão", result);
+            Assert.AreEqual("Eu so joÃ\u00a3o", result);
         }
 
     }
