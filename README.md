@@ -194,24 +194,23 @@ So you should have different folder for each language culture.
 After talking with others Devs about my package, they asked my about performance.
 
 ``` ini
-
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
-Intel Core i7-10870H CPU 2.20GHz, 1 CPU, 16 logical and 8 physical cores
-.NET SDK=6.0.101
-  [Host]     : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
-  DefaultJob : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+BenchmarkDotNet v0.14.0, EndeavourOS
+AMD Ryzen 9 7950X3D, 1 CPU, 32 logical and 16 physical cores
+.NET SDK 9.0.100
+  [Host]     : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+  DefaultJob : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
 
 
 ```
-|                                          Method |          Mean |        Error |       StdDev |           Min |           Max |    Ratio | RatioSD |   Gen 0 |  Gen 1 |  Gen 2 | Allocated |
-|------------------------------------------------ |--------------:|-------------:|-------------:|--------------:|--------------:|---------:|--------:|--------:|-------:|-------:|----------:|
-|                                       Localizer |      57.34 ns |     0.590 ns |     0.523 ns |      56.65 ns |      58.46 ns |     1.00 |    0.00 |       - |      - |      - |         - |
-|                                   JsonLocalizer |      41.50 ns |     0.552 ns |     0.516 ns |      40.60 ns |      42.46 ns |     0.72 |    0.01 |  0.0057 |      - |      - |      48 B |
-|                       JsonLocalizerWithCreation | 169,174.60 ns | 1,070.840 ns | 1,001.664 ns | 167,445.80 ns | 170,873.85 ns | 2,950.03 |   33.21 |  4.6387 | 2.1973 | 0.2441 |  40,706 B |
-|                   I18nJsonLocalizerWithCreation | 228,438.65 ns | 4,188.350 ns | 6,643.166 ns | 218,070.12 ns | 245,103.20 ns | 4,026.62 |  130.32 | 12.2070 | 6.1035 | 0.4883 | 104,172 B |
-| JsonLocalizerWithCreationAndExternalMemoryCache |   2,813.26 ns |    51.894 ns |    48.541 ns |   2,731.36 ns |   2,920.27 ns |    49.04 |    0.92 |  0.5264 | 0.2632 |      - |   4,424 B |
-|                JsonLocalizerDefaultCultureValue |     145.34 ns |     1.284 ns |     1.201 ns |     142.61 ns |     146.81 ns |     2.53 |    0.04 |  0.0315 |      - |      - |     264 B |
-|                    LocalizerDefaultCultureValue |     159.06 ns |     0.919 ns |     0.859 ns |     157.63 ns |     160.51 ns |     2.77 |    0.03 |  0.0257 |      - |      - |     216 B |
+| Method                                          | Mean         | Error        | StdDev       | Min          | Max          | Ratio    | RatioSD | Gen0   | Gen1   | Allocated | Alloc Ratio |
+|------------------------------------------------ |-------------:|-------------:|-------------:|-------------:|-------------:|---------:|--------:|-------:|-------:|----------:|------------:|
+| Localizer                                       |     32.80 ns |     0.119 ns |     0.111 ns |     32.63 ns |     32.98 ns |     1.00 |    0.00 |      - |      - |         - |          NA |
+| JsonLocalizer                                   |     14.69 ns |     0.161 ns |     0.150 ns |     14.47 ns |     14.99 ns |     0.45 |    0.00 | 0.0010 |      - |      48 B |          NA |
+| JsonLocalizerWithCreation                       | 45,616.81 ns |   869.905 ns |   966.897 ns | 44,252.47 ns | 47,202.03 ns | 1,390.89 |   29.11 | 0.6104 | 0.4883 |   31008 B |          NA |
+| I18nJsonLocalizerWithCreation                   | 64,513.78 ns | 1,275.916 ns | 2,548.143 ns | 61,644.40 ns | 71,427.74 ns | 1,967.07 |   77.22 | 5.1270 | 4.8828 |   88483 B |          NA |
+| JsonLocalizerWithCreationAndExternalMemoryCache |  4,186.98 ns |    59.294 ns |    55.463 ns |  4,067.49 ns |  4,269.49 ns |   127.66 |    1.69 | 0.1144 | 0.1068 |    5824 B |          NA |
+| JsonLocalizerDefaultCultureValue                |     84.08 ns |     0.875 ns |     0.776 ns |     82.64 ns |     85.64 ns |     2.56 |    0.02 | 0.0052 |      - |     264 B |          NA |
+| LocalizerDefaultCultureValue                    |    105.14 ns |     1.347 ns |     1.260 ns |    102.46 ns |    107.33 ns |     3.21 |    0.04 | 0.0129 |      - |     216 B |          NA |
 
 
 # Contributors
