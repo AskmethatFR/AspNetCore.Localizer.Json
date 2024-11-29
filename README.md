@@ -194,24 +194,23 @@ So you should have different folder for each language culture.
 After talking with others Devs about my package, they asked my about performance.
 
 ``` ini
-
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
-Intel Core i7-10870H CPU 2.20GHz, 1 CPU, 16 logical and 8 physical cores
-.NET SDK=6.0.101
-  [Host]     : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
-  DefaultJob : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+BenchmarkDotNet v0.14.0, EndeavourOS
+AMD Ryzen 9 7950X3D, 1 CPU, 32 logical and 16 physical cores
+.NET SDK 9.0.100
+[Host]     : .NET 8.0.11 (8.0.1124.51707), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+DefaultJob : .NET 8.0.11 (8.0.1124.51707), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
 
 
 ```
-|                                          Method |          Mean |        Error |       StdDev |           Min |           Max |    Ratio | RatioSD |   Gen 0 |  Gen 1 |  Gen 2 | Allocated |
-|------------------------------------------------ |--------------:|-------------:|-------------:|--------------:|--------------:|---------:|--------:|--------:|-------:|-------:|----------:|
-|                                       Localizer |      57.34 ns |     0.590 ns |     0.523 ns |      56.65 ns |      58.46 ns |     1.00 |    0.00 |       - |      - |      - |         - |
-|                                   JsonLocalizer |      41.50 ns |     0.552 ns |     0.516 ns |      40.60 ns |      42.46 ns |     0.72 |    0.01 |  0.0057 |      - |      - |      48 B |
-|                       JsonLocalizerWithCreation | 169,174.60 ns | 1,070.840 ns | 1,001.664 ns | 167,445.80 ns | 170,873.85 ns | 2,950.03 |   33.21 |  4.6387 | 2.1973 | 0.2441 |  40,706 B |
-|                   I18nJsonLocalizerWithCreation | 228,438.65 ns | 4,188.350 ns | 6,643.166 ns | 218,070.12 ns | 245,103.20 ns | 4,026.62 |  130.32 | 12.2070 | 6.1035 | 0.4883 | 104,172 B |
-| JsonLocalizerWithCreationAndExternalMemoryCache |   2,813.26 ns |    51.894 ns |    48.541 ns |   2,731.36 ns |   2,920.27 ns |    49.04 |    0.92 |  0.5264 | 0.2632 |      - |   4,424 B |
-|                JsonLocalizerDefaultCultureValue |     145.34 ns |     1.284 ns |     1.201 ns |     142.61 ns |     146.81 ns |     2.53 |    0.04 |  0.0315 |      - |      - |     264 B |
-|                    LocalizerDefaultCultureValue |     159.06 ns |     0.919 ns |     0.859 ns |     157.63 ns |     160.51 ns |     2.77 |    0.03 |  0.0257 |      - |      - |     216 B |
+| Method                                          | Mean         | Error        | StdDev       | Median       | Min          | Max          | Ratio    | RatioSD | Gen0   | Gen1   | Allocated | Alloc Ratio |
+|------------------------------------------------ |-------------:|-------------:|-------------:|-------------:|-------------:|-------------:|---------:|--------:|-------:|-------:|----------:|------------:|
+| Localizer                                       |     31.31 ns |     0.122 ns |     0.108 ns |     31.29 ns |     31.09 ns |     31.45 ns |     1.00 |    0.00 |      - |      - |         - |          NA |
+| JsonLocalizer                                   |     14.65 ns |     0.288 ns |     0.269 ns |     14.59 ns |     14.34 ns |     15.14 ns |     0.47 |    0.01 | 0.0010 |      - |      48 B |          NA |
+| JsonLocalizerWithCreation                       | 44,313.36 ns |   464.509 ns |   434.502 ns | 44,246.52 ns | 43,572.69 ns | 45,136.89 ns | 1,415.47 |   14.25 | 0.6104 | 0.4883 |   31032 B |          NA |
+| I18nJsonLocalizerWithCreation                   | 68,861.77 ns | 1,366.375 ns | 2,791.143 ns | 67,083.92 ns | 66,211.72 ns | 75,404.76 ns | 2,199.60 |   88.64 | 5.1270 | 4.8828 |   88483 B |          NA |
+| JsonLocalizerWithCreationAndExternalMemoryCache |  2,902.25 ns |    55.891 ns |    59.802 ns |  2,899.28 ns |  2,799.21 ns |  2,995.20 ns |    92.70 |    1.89 | 0.1144 | 0.1106 |    5824 B |          NA |
+| JsonLocalizerDefaultCultureValue                |    137.16 ns |     0.663 ns |     0.620 ns |    136.96 ns |    136.47 ns |    138.50 ns |     4.38 |    0.02 | 0.0157 |      - |     264 B |          NA |
+| LocalizerDefaultCultureValue                    |    159.02 ns |     1.943 ns |     1.817 ns |    159.17 ns |    156.13 ns |    162.75 ns |     5.08 |    0.06 | 0.0129 |      - |     216 B |          NA |
 
 
 # Contributors
