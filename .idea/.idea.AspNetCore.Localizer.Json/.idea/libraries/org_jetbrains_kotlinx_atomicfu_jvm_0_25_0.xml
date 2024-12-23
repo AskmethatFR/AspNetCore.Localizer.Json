@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="org.jetbrains.kotlinx.atomicfu-jvm-0.25.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.nuget/packages/xamarin.kotlinx.atomicfu.jvm/0.25.0.3/jar/org.jetbrains.kotlinx.atomicfu-jvm-0.25.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
