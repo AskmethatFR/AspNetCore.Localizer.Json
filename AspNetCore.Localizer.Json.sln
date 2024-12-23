@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{3ECBD0
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "AspNetCore.Localizer.Json.Shared", "AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.shproj", "{04DFB351-A1DE-48CE-91E2-C3CA53F03913}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{2D5B1281-0057-4F03-B31D-D6B7396629B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,5 +72,9 @@ Global
 		AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems*{04dfb351-a1de-48ce-91e2-c3ca53f03913}*SharedItemsImports = 13
 		AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems*{0fb2924b-389a-40c3-81d9-8dc74a971e20}*SharedItemsImports = 5
 		AspNetCore.Localizer.Json.Shared\AspNetCore.Localizer.Json.Shared.projitems*{e0931c8c-79ed-4de7-a70a-c06ae092b218}*SharedItemsImports = 5
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D4271821-DC98-4FB9-A7C3-107535DFB2F1} = {2D5B1281-0057-4F03-B31D-D6B7396629B2}
+		{630D66E9-7DD4-4B6C-891A-F9D829BBE2B9} = {2D5B1281-0057-4F03-B31D-D6B7396629B2}
 	EndGlobalSection
 EndGlobal
