@@ -6,13 +6,11 @@ using Microsoft.Extensions.Options;
 namespace AspNetCore.Localizer.Json.Localizer
 {
     //resource not use, only here to match microsoft interfaces
-    internal class JsonStringLocalizerOfT<T> : JsonStringLocalizer, IJsonStringLocalizer<T>, IStringLocalizer<T>
+    internal class JsonStringLocalizerOfT<T> : 
+        JsonStringLocalizer, IJsonStringLocalizer<T>, IStringLocalizer<T>
     {
-        public JsonStringLocalizerOfT(IOptions<JsonLocalizationOptions> localizationOptions, EnvironmentWrapper env) : base(localizationOptions, env, ModifyBaseName)
+        public JsonStringLocalizerOfT(IOptions<JsonLocalizationOptions> localizationOptions) : base(localizationOptions)
         {
         }
-
-
-        private static string ModifyBaseName => typeof(T).ToString();
     }
 }

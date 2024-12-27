@@ -56,7 +56,7 @@ namespace AspNetCore.Localizer.Json.Extensions
         }
 
 
-        internal static void AddJsonLocalizationServices(IServiceCollection services)
+        private static void AddJsonLocalizationServices(IServiceCollection services)
         {
             _ = services.AddMemoryCache();
             _ = services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
@@ -64,7 +64,6 @@ namespace AspNetCore.Localizer.Json.Extensions
             _ = services.AddScoped(typeof(IJsonStringLocalizer<>), typeof(JsonStringLocalizerOfT<>));
             _ = services.AddScoped<IStringLocalizer, JsonStringLocalizer>();
             _ = services.AddScoped(typeof(IStringLocalizer<>), typeof(JsonStringLocalizerOfT<>));
-            _ = services.AddSingleton<EnvironmentWrapper>();
         }
 
         /// <summary>

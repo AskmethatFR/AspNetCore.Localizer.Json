@@ -5,17 +5,11 @@
         <TargetFramework>net9.0</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
-
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Update="Resources\localization.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="i18n\**\*.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+        <EmbeddedResource Include="Resources\localization.json" WithCulture="false">
+        </EmbeddedResource>
+        <EmbeddedResource Include="i18n\*.json" WithCulture="false">
+        </EmbeddedResource>
     </ItemGroup>
 
 
@@ -31,6 +25,10 @@
         </Compile>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj" />
+        <ProjectReference Include="..\..\AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="*" />
+      <PackageReference Include="BenchmarkDotNet.Annotations" Version="*" />
     </ItemGroup>
 </Project>

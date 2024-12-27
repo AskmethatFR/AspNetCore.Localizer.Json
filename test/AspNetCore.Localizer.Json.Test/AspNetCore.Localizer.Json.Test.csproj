@@ -17,72 +17,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="encoding\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="fallback\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="json\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="multiple2\deep\localization.it.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="multiple2\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="multiple2\localization.pt.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="multiple\deep\localization.it.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="multiple\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="multiple\localization.pt.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="i18nPluralization\localization.en.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="i18nPluralization\localization.es.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="path2\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="path3\badjson.en-US.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="pluralization\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="path\localization.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-     <None Update="factory\**\*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="i18n\**\*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="i18nFallback\**\*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="i18n\localization.fr\localization.fr-FR.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Helpers\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Localizer\JsonLocalizerTestBase.cs" />
+    <EmbeddedResource Include="multiple\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="multiple2\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18n\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="factory\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18nFallback\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18nPluralization\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="Resources\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="pluralization\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="path\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="path2\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="path3\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="json_files\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="fallback\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="encoding\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="interpolation\**\*.json" WithCulture="false" />
   </ItemGroup>
 </Project>

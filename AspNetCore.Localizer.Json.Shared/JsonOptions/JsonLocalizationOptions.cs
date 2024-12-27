@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -18,11 +19,6 @@ namespace AspNetCore.Localizer.Json.JsonOptions
         public const string DEFAULT_MISSING_TRANSLATIONS = "MissingTranslations.json";
 
         public new string ResourcesPath { get; set; } = DEFAULT_RESOURCES;
-
-        /// <summary>
-        /// This property enables to configure additional resource paths to look for localizations files
-        /// </summary>        
-        public string[] AdditionalResourcePaths { get; set; }
         
         /// We cache all values to memory to avoid loading files for each request, this parameter defines the time after which the cache is refreshed.
         public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(30);
@@ -90,12 +86,6 @@ namespace AspNetCore.Localizer.Json.JsonOptions
             }
         }
 
-
-        /// <summary>
-        /// Look for an absolute path instead of project path.
-        /// </summary>
-        public bool IsAbsolutePath { get; set; } = false;
-
         /// <summary>
         /// Specify the file encoding name.
         /// .NET core supported:
@@ -110,10 +100,7 @@ namespace AspNetCore.Localizer.Json.JsonOptions
         /// Specify the file encoding.
         /// </summary>
         public Encoding FileEncoding { get; set; } = Encoding.UTF8;
-        /// <summary>
-        /// Use base name location for Views and constructors like default Resx localization in ResourcePathFolder. 
-        /// </summary>
-        public bool UseBaseName { get; set; } = false;
+
         /// <summary>
         /// Separator used to get singular or pluralized version of localization.
         /// </summary>
@@ -138,17 +125,21 @@ namespace AspNetCore.Localizer.Json.JsonOptions
         /// If set to true, the localizer will replace all the translated text with "*" to help identify missing translations.
         /// </summary>
         public bool LocalizerDiagnosticMode { get; set; } = false;
-
-        /// <summary>
-        /// If a list of files is provided, the localizer will not attempt to scan i18n directories. This option is required for Blazor Wasm.
-        /// </summary>
-        public string[] JsonFileList { get; set; } = null;
-
-        public Assembly Assembly { get; set; } = null;
+        
 
         /// <summary>
         /// This properly will ignore the JSON errors if set to true. Recommended in production but not in development.
         /// </summary>
         public bool IgnoreJsonErrors { get; set; } = false;
+        
+        /// <summary>
+        /// Provide a custom assembly helper to load assemblies.
+        /// </summary>
+        public IAssemblyHelper AssemblyHelper { get; set; } = new AssemblyHelper();
+
+        /// <summary>
+        /// Additional paths to search for JSON files.
+        /// </summary>
+        public string[] AdditionalResourcesPaths { get; set; } = Array.Empty<string>();
     }
 }

@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 using LocalizedString = Microsoft.Extensions.Localization.LocalizedString;
 
@@ -30,6 +31,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                      new CultureInfo("en-AU")
                 },
                 ResourcesPath = "fallback",
+                AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly())
             });
         }
 

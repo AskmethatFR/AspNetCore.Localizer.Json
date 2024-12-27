@@ -1,8 +1,9 @@
-﻿using AspNetCore.Localizer.Json.Extensions;
-using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Options;
+﻿
+
 using System;
 using AspNetCore.Localizer.Json.JsonOptions;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 
 namespace AspNetCore.Localizer.Json.Localizer
 {
@@ -13,26 +14,20 @@ namespace AspNetCore.Localizer.Json.Localizer
     {
         private readonly IOptions<JsonLocalizationOptions> _localizationOptions;
 
-            private readonly EnvironmentWrapper _env;
-        
-         public JsonStringLocalizerFactory(
-            EnvironmentWrapper env,
-            IOptions<JsonLocalizationOptions> localizationOptions = null)
+        public JsonStringLocalizerFactory(IOptions<JsonLocalizationOptions> localizationOptions = null)
         {
-            _env = env;
             _localizationOptions = localizationOptions ?? throw new ArgumentNullException(nameof(localizationOptions));
         }
 
 
          public IStringLocalizer Create(Type resourceSource)
         {
-            return new JsonStringLocalizer(_localizationOptions, _env);
+            return new JsonStringLocalizer(_localizationOptions);
         }
 
         public IStringLocalizer Create(string baseName, string location)
         {
-            baseName = _localizationOptions.Value.UseBaseName ? baseName : string.Empty;
-            return new JsonStringLocalizer(_localizationOptions, _env, baseName);
+            return new JsonStringLocalizer(_localizationOptions);
         }
     }
 }

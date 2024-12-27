@@ -1,37 +1,20 @@
-﻿using System;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Caching.Memory;
-using AspNetCore.Localizer.Json.Localizer;
-using AspNetCore.Localizer.Json.Benchmark.Helpers;
-using Microsoft.Extensions.Localization;
+﻿using AspNetCore.Localizer.Json.Localizer;
 using System.Globalization;
+using AspNetCore.Localizer.Json.Benchmark.Resources;
+using AspNetCore.Localizer.Json.Commons;
+using AspNetCore.Localizer.Json.JsonOptions;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using AspNetCore.Localizer.Json.Benchmark.Resources;
-using AspNetCore.Localizer.Json.JsonOptions;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
 
 namespace AspNetCore.Localizer.Json.Benchmark
 {
-    public class HostingEnvironmentStub : IWebHostEnvironment
-    {
-        public HostingEnvironmentStub()
-        {
-        }
-
-        public string EnvironmentName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string ApplicationName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string WebRootPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IFileProvider WebRootFileProvider { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string ContentRootPath { get => AppContext.BaseDirectory; set => throw new NotImplementedException(); }
-        public IFileProvider ContentRootFileProvider { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    }
 
     [MinColumn, MaxColumn, MemoryDiagnoser, MarkdownExporter]
     public class BenchmarkJSONLocalizer
     {
-        private readonly IWebHostEnvironment env = new HostingEnvironment();
         private readonly IMemoryCache _cach = new MemoryCache(Options.Create<MemoryCacheOptions>(new MemoryCacheOptions() {}));
         private readonly IMemoryCache _cach2 = new MemoryCache(Options.Create<MemoryCacheOptions>(new MemoryCacheOptions() { }));
 
@@ -43,8 +26,10 @@ namespace AspNetCore.Localizer.Json.Benchmark
             {
                 DefaultCulture = new CultureInfo("fr-FR"),
                 ResourcesPath = "Resources",
-                Caching = _cach2
-            }), new EnvironmentWrapper(new HostingEnvironmentStub()),null);
+                Caching = _cach2,
+                AssemblyHelper = new AssemblyHelper("AspNetCore.Localizer.Json.Benchmark"),
+                IgnoreJsonErrors = true,
+            }));
         }
 
         [Benchmark(Baseline = true)]
@@ -71,8 +56,9 @@ namespace AspNetCore.Localizer.Json.Benchmark
                     new CultureInfo("fr-FR"),
                     new CultureInfo("en-US"),
                 },
-                LocalizationMode = LocalizationMode.I18n
-            }), new EnvironmentWrapper(new HostingEnvironmentStub()), null);
+                LocalizationMode = LocalizationMode.I18n,
+                AssemblyHelper = new AssemblyHelper("AspNetCore.Localizer.Json.Benchmark"),
+            }));
 
             return localizer.GetString("BaseName1");
         }
@@ -88,12 +74,13 @@ namespace AspNetCore.Localizer.Json.Benchmark
                 {
                     new CultureInfo("fr-FR"),
                     new CultureInfo("en-US"),
-                }
-            }), new EnvironmentWrapper(new HostingEnvironmentStub()), null);
-
+                },
+                AssemblyHelper = new AssemblyHelper("AspNetCore.Localizer.Json.Benchmark")
+            }));
+        
             return localizer.GetString("BaseName1");
         }
-
+        
         [Benchmark]
         public string JsonLocalizerWithCreationAndExternalMemoryCache()
         {
@@ -106,21 +93,22 @@ namespace AspNetCore.Localizer.Json.Benchmark
                     new CultureInfo("fr-FR"),
                     new CultureInfo("en-US"),
                 },
-                Caching = _cach
-            }), new EnvironmentWrapper(new HostingEnvironmentStub()), null);
-
+                Caching = _cach,
+                AssemblyHelper = new AssemblyHelper("AspNetCore.Localizer.Json.Benchmark")
+            }));
+        
             return localizer.GetString("BaseName1");
         }
-
+        
         [Benchmark]
         public string JsonLocalizerDefaultCultureValue()
         {
             CultureInfo.CurrentUICulture = new CultureInfo("pt-PT");
             return _jsonLocalizer.GetString("BaseName1").Value;
         }
-
+        
         [Benchmark]
-        public string LocalizerDefaultCultureValue()
+        public string MicrosoftLocalizerDefaultCultureValue()
         {
             CultureInfo.CurrentUICulture = new CultureInfo("pt-PT");
             return SharedResources.BaseName1;

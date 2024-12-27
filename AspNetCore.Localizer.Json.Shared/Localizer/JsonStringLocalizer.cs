@@ -8,14 +8,27 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using AspNetCore.Localizer.Json.JsonOptions;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 
 namespace AspNetCore.Localizer.Json.Localizer
 {
     internal partial class JsonStringLocalizer : JsonStringLocalizerBase, IJsonStringLocalizer
     {
         private readonly Dictionary<string, IDictionary<string, string>> _missingJsonValues = new();
-        private string _missingTranslations = null;
+        private readonly string _missingTranslations = null;
+
+        public JsonStringLocalizer(IOptions<JsonLocalizationOptions> localizationOptions) : base(localizationOptions)
+        {
+            _missingTranslations = localizationOptions.Value.MissingTranslationsOutputFile;
+        }
+
+        public JsonStringLocalizer(IOptions<JsonLocalizationOptions> localizationOptions, string baseName) : base(
+            localizationOptions, baseName)
+        {
+            _missingTranslations = localizationOptions.Value.MissingTranslationsOutputFile;
+        }
 
         private static LocalizedString ConvertToChar(string value, char c, int additionalRepeats = 0) =>
             new LocalizedString(value, new string(c, value.Length + additionalRepeats));
@@ -26,55 +39,58 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         private LocalizedString GetLocalizedString(string name, params object[] arguments)
         {
-            if (_localizationOptions.Value.LocalizerDiagnosticMode)
+            if (LocalizationOptions.Value.LocalizerDiagnosticMode)
+            {
                 return ConvertToChar(name, 'X');
+            }
 
-            string format = GetString(name);
-            if (format == null)
-                return new LocalizedString(name, name, resourceNotFound: true);
+            string? value = GetString(name);
+            bool resourceNotFound = value == null;
 
-            string value = arguments.Length > 0
-                ? GetPluralLocalization(name, format, arguments)
-                : format;
+            value ??= name; // Utilise le nom comme valeur par défaut si aucune valeur n'est trouvée
 
-            return new LocalizedString(name, value, resourceNotFound: false);
+            value = FormatString(value, arguments);
+
+            return new LocalizedString(name, value, resourceNotFound);
         }
 
-        private string GetPluralLocalization(string name, string format, object[] arguments)
+
+        private string FormatString(string value, object[]? arguments)
         {
-            if (arguments.LastOrDefault() is bool isPlural)
+            if (arguments is { Length: > 0 })
             {
-                string value = GetString(name);
-                if (!string.IsNullOrEmpty(value) && value.Contains(_localizationOptions.Value.PluralSeparator))
+                value = string.Format(value, arguments);
+
+                if (arguments[^1] is bool isPlural)
                 {
-                    var parts = value.Split(_localizationOptions.Value.PluralSeparator);
-                    return parts.Length > 1 ? parts[isPlural ? 1 : 0] : value;
+                    if (!string.IsNullOrEmpty(value) && value.Contains(LocalizationOptions.Value.PluralSeparator))
+                    {
+                        var parts = value.Split(new[] { LocalizationOptions.Value.PluralSeparator }, 2,
+                            StringSplitOptions.None);
+                        return parts.Length > 1 ? parts[isPlural ? 1 : 0] : value;
+                    }
                 }
             }
 
-            return string.Format(format, arguments);
+            return value;
         }
 
         public LocalizedString GetPlural(string name, double count, params object[] arguments)
         {
             InitCorrectJsonCulture();
 
-            // Retrieve the pluralization rule set for the current culture
             IPluralizationRuleSet pluralizationRuleSet = GetPluralizationToUse();
             string applicableRule = pluralizationRuleSet.GetMatchingPluralizationRule(count);
 
-            // Generate the pluralization rule key
-            string nameWithRule = name + "." + applicableRule;
+            string nameWithRule = $"{name}.{applicableRule}";
 
-            // Attempt to get the localized format
-            if (localization?.TryGetValue(nameWithRule, out var localizedValue) == true)
+            if (Localization != null && Localization.TryGetValue(nameWithRule, out var localizedValue))
             {
                 return FormatLocalizedString(name, localizedValue.Value, count, arguments);
             }
 
-            // If the specific rule is not found, try the "Other" rule or fallback
-            string nameWithOtherRule = name + "." + PluralizationConstants.Other;
-            if (localization?.TryGetValue(nameWithOtherRule, out var localizedOtherValue) == true)
+            string nameWithOtherRule = $"{name}.{PluralizationConstants.Other}";
+            if (Localization != null && Localization.TryGetValue(nameWithOtherRule, out var localizedOtherValue))
             {
                 return FormatLocalizedString(name, localizedOtherValue.Value, count, arguments);
             }
@@ -83,7 +99,9 @@ namespace AspNetCore.Localizer.Json.Localizer
             return FormatLocalizedString(name, fallback ?? name, count, arguments, fallback == null);
         }
 
-        private LocalizedString FormatLocalizedString(string name, string format, double count, object[] arguments, bool resourceNotFound = false)
+
+        private LocalizedString FormatLocalizedString(string name, string format, double count, object[] arguments,
+            bool resourceNotFound = false)
         {
             // unshift the count to the arguments array
             object[] argumentsWithCount = new object[arguments.Length + 1];
@@ -101,7 +119,7 @@ namespace AspNetCore.Localizer.Json.Localizer
         {
             // Initialize the culture if needed
             var culture = CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.CurrentUICulture;
-            if (!IsUICultureCurrentCulture(culture))
+            if (!IsUiCultureCurrentCulture(culture))
             {
                 InitJsonFromCulture(culture);
             }
@@ -113,7 +131,7 @@ namespace AspNetCore.Localizer.Json.Localizer
         {
             InitCorrectJsonCulture();
 
-            return localization?.Where(w => includeParentCultures || !w.Value.IsParent)
+            return Localization?.Where(w => includeParentCultures || !w.Value.IsParent)
                 .Select(l =>
                     new LocalizedString(l.Key, l.Value.Value ?? l.Key, resourceNotFound: l.Value.Value == null))
                 .OrderBy(s => s.Name);
@@ -121,37 +139,37 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         public IStringLocalizer WithCulture(CultureInfo culture)
         {
-            _localizationOptions.Value.SupportedCultureInfos.Add(culture);
+            LocalizationOptions.Value.SupportedCultureInfos.Add(culture);
 
             CultureInfo.CurrentCulture = culture;
 
-            return new JsonStringLocalizer(_localizationOptions, _env);
+            return new JsonStringLocalizer(LocalizationOptions);
         }
 
         private readonly Dictionary<string, string> _localStringCache = new();
 
-        private string GetString(string name, bool shouldTryDefaultCulture = true)
+        private string? GetString(string name, bool shouldTryDefaultCulture = true)
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
 
             // Check cache before looking up
-            if (_localStringCache.TryGetValue(name, out string cachedValue))
+            if (_localStringCache.TryGetValue(name, out string? cachedValue))
             {
                 return cachedValue;
             }
 
             var culture = InitCorrectJsonCulture(true);
 
-            if (localization != null && localization.TryGetValue(name, out LocalizatedFormat localizedValue))
+            if (Localization != null && Localization.TryGetValue(name, out LocalizatedFormat? localizedValue))
             {
-                _localStringCache[name] = localizedValue.Value; // Cache the result
+                _localStringCache[name] = localizedValue.Value;
                 return localizedValue.Value;
             }
 
             if (shouldTryDefaultCulture)
             {
-                InitJsonFromCulture(_localizationOptions.Value.DefaultCulture);
+                InitJsonFromCulture(LocalizationOptions.Value.DefaultCulture);
                 return GetString(name, false);
             }
 
@@ -164,13 +182,13 @@ namespace AspNetCore.Localizer.Json.Localizer
         {
             var cultureName = culture?.TwoLetterISOLanguageName ?? "default";
 
-            if (_localizationOptions.Value.MissingTranslationLogBehavior ==
+            if (LocalizationOptions.Value.MissingTranslationLogBehavior ==
                 MissingTranslationLogBehavior.LogConsoleError)
             {
                 Console.Error.WriteLine($"'{name}' does not contain any translation for {cultureName}");
             }
 
-            if (_localizationOptions.Value.MissingTranslationLogBehavior == MissingTranslationLogBehavior.CollectToJSON)
+            if (LocalizationOptions.Value.MissingTranslationLogBehavior == MissingTranslationLogBehavior.CollectToJSON)
             {
                 if (!_missingJsonValues.TryGetValue(cultureName, out var localeMissingValues))
                 {
@@ -202,67 +220,50 @@ namespace AspNetCore.Localizer.Json.Localizer
         public void ClearMemCache(IEnumerable<CultureInfo> culturesToClearFromCache = null)
         {
             foreach (var cultureInfo in culturesToClearFromCache ??
-                                        _localizationOptions.Value.SupportedCultureInfos.ToArray())
-                _memCache.Remove(GetCacheKey(cultureInfo));
+                                        LocalizationOptions.Value.SupportedCultureInfos.ToArray())
+                MemCache.Remove(GetCacheKey(cultureInfo));
         }
 
         public void ReloadMemCache(IEnumerable<CultureInfo> reloadCulturesToCache = null)
         {
             ClearMemCache();
             foreach (var cultureInfo in reloadCulturesToCache ??
-                                        _localizationOptions.Value.SupportedCultureInfos.ToArray())
+                                        LocalizationOptions.Value.SupportedCultureInfos.ToArray())
                 InitJsonFromCulture(cultureInfo);
         }
 
         private void WriteMissingTranslations()
         {
-            if (!string.IsNullOrWhiteSpace(_missingTranslations) && (_missingJsonValues?.Count ?? 0) > 0)
+            if (string.IsNullOrWhiteSpace(_missingTranslations) || _missingJsonValues.Count == 0)
+                return;
+
+            try
             {
-                try
+                lock (_missingJsonValues)
                 {
                     foreach (var locale in _missingJsonValues)
                     {
-                        if (locale.Value is null) continue;
+                        if (locale.Value.Count == 0)
+                        {
+                            continue;
+                        }
 
                         var json = JsonSerializer.Serialize(locale.Value);
-                        var newFile = Path.ChangeExtension($"{Path.GetFileNameWithoutExtension(_missingTranslations)}-{locale.Key}", Path.GetExtension(_missingTranslations));
-                        Console.Error.WriteLine($"Writing {locale.Value.Count} missing translations to {Path.GetFullPath(newFile)}");
+                        var newFile = Path.ChangeExtension(
+                            $"{Path.GetFileNameWithoutExtension(_missingTranslations)}-{locale.Key}",
+                            Path.GetExtension(_missingTranslations)
+                        );
 
-                        lock (_missingJsonValues)
-                        {
-                            File.WriteAllText(newFile, json);
-                        }
+                        File.WriteAllText(newFile, json);
+                        Console.Error.WriteLine(
+                            $"Writing {locale.Value.Count} missing translations to {Path.GetFullPath(newFile)}");
                     }
                 }
-                catch (Exception)
-                {
-                    Console.Error.WriteLine($"Cannot write missing translations to {Path.GetFullPath(_missingTranslations)}");
-                }
             }
-        }
-
-        /// <summary>
-        /// Get the full path of a JSON resource.
-        /// </summary>
-        /// <param name="path">Relative or absolute path of the resource.</param>
-        /// <returns>Full path to the resource.</returns>
-        private string GetJsonRelativePath(string path)
-        {
-            // If the path is absolute, return it directly.
-            if (_localizationOptions.Value.IsAbsolutePath)
+            catch (Exception ex)
             {
-                return path;
+                Console.Error.WriteLine($"Cannot write missing translations to {_missingTranslations}: {ex.Message}");
             }
-
-            // Handle relative or unspecified paths.
-            if (string.IsNullOrEmpty(path))
-            {
-                // Use the "Resources" directory in the application root path.
-                return Path.Combine(_env.ContentRootPath, "Resources");
-            }
-
-            // If a relative path is provided, combine it with the base directory of the application.
-            return Path.Combine(AppContext.BaseDirectory, path);
         }
     }
 }

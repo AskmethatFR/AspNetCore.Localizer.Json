@@ -15,4 +15,20 @@
         <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="9.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Resources\test.fr.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Resources\test.fr.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>test.fr.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Include="Resources\test.json" WithCulture="false" />
+    </ItemGroup>
+
 </Project>

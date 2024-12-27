@@ -1,13 +1,18 @@
 # AspNetCore.Localizer.Json
+
 Json Localizer library for .NetCore Asp.net projects
 
 #### Nuget
+
 [![NuGet](https://img.shields.io/nuget/dt/AspNetCore.Localizer.Json.svg)](https://www.nuget.org/packages/AspNetCore.Localizer.Json)
-[![NuGet](https://img.shields.io/nuget/dt/AspNetCore.Localizer.Json.Wasm.svg)](https://www.nuget.org/packages/AspNetCore.Localizer.Wasm.Json)
 
 #### Build
 
-[![.NET](https://github.com/CorentinFoviaux/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml/badge.svg)](https://github.com/AskmethatFR/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/AskmethatFR/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml/badge.svg)](https://github.com/AskmethatFR/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml)
+
+# IMPORTANT
+
+From version 1.0.0, the library use only EmbeddedResource to load the files.
 
 # Project
 
@@ -18,7 +23,8 @@ The library is compatible with NetCore.
 # Configuration
 
 An extension method is available for `IServiceCollection`.
-You can have a look at the method [here](https://github.com/AlexTeixeira/Askmethat-Aspnet-JsonLocalizer/blob/development/AspNetCore.Localizer.Json/Extensions/JsonLocalizerServiceExtension.cs)
+You can have a look at the
+method [here](https://github.com/AlexTeixeira/Askmethat-Aspnet-JsonLocalizer/blob/development/AspNetCore.Localizer.Json/Extensions/JsonLocalizerServiceExtension.cs)
 
 ## Options
 
@@ -35,61 +41,72 @@ services.AddJsonLocalization(options => {
           new CultureInfo("en-US"),
           new CultureInfo("fr-FR")
         };
+        options.AssemblyHelper = new AssemblyHelper("MyAssembly");
     });
 ```
 
 ### Current Options
 
-- **SupportedCultureInfos** : _Default value : _List containing only default culture_ and CurrentUICulture. Optionnal array of cultures that you should provide to plugin. _(Like RequestLocalizationOptions)
-- **ResourcesPath** : _Default value : `$"{_env.WebRootPath}/Resources/"`_.  Base path of your resources. The plugin will browse the folder and sub-folders and load all present JSON files.
-- **AdditionalResourcePaths** : _Default value : null_. Optionnal array of additional paths to search for resources.
-- **CacheDuration** : _Default value : 30 minutes_. We cache all values to memory to avoid loading files for each request, this parameter defines the time after which the cache is refreshed.
+- **SupportedCultureInfos** : _Default value : _List containing only default culture_ and CurrentUICulture. Optionnal
+  array of cultures that you should provide to plugin. _(Like RequestLocalizationOptions)
+- **ResourcesPath** : _Default value : `$"{_env.WebRootPath}/Resources/"`_. Base path of your resources. The plugin will
+  browse the folder and sub-folders and load all present JSON files.
+- **AdditionalResourcesPaths** : _Default value : null_. Optionnal array of additional paths to search for resources.
+- **CacheDuration** : _Default value : 30 minutes_. We cache all values to memory to avoid loading files for each
+  request, this parameter defines the time after which the cache is refreshed.
 - **FileEncoding** : _default value : UTF8_. Specify the file encoding.
-- **IsAbsolutePath** : *_default value : false*. Look for an absolute path instead of project path.
-- **UseBaseName** : *_default value : false*. Use base name location for Views and constructors like default Resx localization in **ResourcePathFolder**. Please have a look at the documentation below to see the different possiblities for structuring your translation files.
-- **Caching** : *_default value: MemoryCache*. Internal caching can be overwritted by using custom class that extends IMemoryCache.
-- **PluralSeparator** : *_default value: |*. Seperator used to get singular or pluralized version of localization. More information in *Pluralization*
+- **Caching** : *_default value: MemoryCache*. Internal caching can be overwritted by using custom class that extends
+  IMemoryCache.
+- **PluralSeparator** : *_default value: |*. Seperator used to get singular or pluralized version of localization. More
+  information in *Pluralization*
 - **MissingTranslationLogBehavior** : *_default value: LogConsoleError*. Define the logging mode
-- **LocalizationMode** : *_default value: Basic*. Define the localization mode for the Json file. Currently Basic and I18n. More information in *LocalizationMode*
-- **MissingTranslationsOutputFile** : This enables to specify in which file the missing translations will be written when `MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON`, defaults to `MissingTranslations-<locale>.json`
-- **IgnoreJsonErrors**: This properly will ignore the JSON errors if set to true. Recommended in production but not in development.
-- **LocalizerDiagnosticMode**: When set to true, the localizer will replace all localized with "X". This is designed to identify text that is _not using the localizer_ on the page.
+- **LocalizationMode** : *_default value: Basic*. Define the localization mode for the Json file. Currently Basic and
+  I18n. More information in *LocalizationMode*
+- **MissingTranslationsOutputFile** : This enables to specify in which file the missing translations will be written
+  when `MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON`, defaults to
+  `MissingTranslations-<locale>.json`
+- **IgnoreJsonErrors**: This properly will ignore the JSON errors if set to true. Recommended in production but not in
+  development.
+- **LocalizerDiagnosticMode**: When set to true, the localizer will replace all localized with "X". This is designed to
+  identify text that is _not using the localizer_ on the page.
+- **AssemblyHelper**: This is used to load the resources from a specific assembly. If not set, the plugin will use the
+  entry assembly.
 
-### Search patterns when UseBaseName = true
+### Assemblies
 
-If UseBaseName is set to true, it will be searched for lingualization files by the following order - skipping the options below if any option before matches.
+To be able to load culture files from an assembly, you should use set WithCulture="false" in csproj file.
 
-- If you use a non-typed IStringLocalizer all files in the Resources-directory, including all subdirectories, will be used to find a localization. This can cause unpredictable behavior if the same key is used in multiple files.
-
-- If you use a typed localizer, the following applies - Namespace is the "short namespace" without the root namespace:
-  - Nested classes will use the translation file of their parent class.
-  - If there is a folder named "Your/Namespace/And/Classname", all contents of this folder will be used.
-  - If there is a folder named "Your/Namespace" the folder will be searched for all json-files beginning with your classname.
-  - Otherwise there will be searched for a json-file starting with "Your.Namespace.And.Classname" in your Resources-folder.
-  - If there any _.shared.json_ file at base path, all the keys that do not exist in other files will be added.
-
-- If you need a base shared files, just add a file named _localization.shared.json_ in your **ResourcesPath**
+``` xml
+<ItemGroup>
+        <EmbeddedResource Include="Resources\localization.json" WithCulture="false">
+        </EmbeddedResource>
+        <EmbeddedResource Include="i18n\*.json" WithCulture="false">
+        </EmbeddedResource>
+    </ItemGroup>
+```
 
 ### Pluralization
 
-In version 2.0.0, Pluralization was introduced.
 You are now able to manage a singular (left) and plural (right) version for the same Key.
 *PluralSeparator* is used as separator between the two strings.
 
 For example : User|Users for key Users
 
-To use plural string, use parameters from [IStringLocalizer](https://github.com/aspnet/AspNetCore/blob/def36fab1e45ef7f169dfe7b59604d0002df3b7c/src/Mvc/Mvc.Localization/src/LocalizedHtmlString.cs), if last parameters is a boolean, pluralization will be activated.
+To use plural string, use parameters
+from [IStringLocalizer](https://github.com/aspnet/AspNetCore/blob/def36fab1e45ef7f169dfe7b59604d0002df3b7c/src/Mvc/Mvc.Localization/src/LocalizedHtmlString.cs),
+if last parameters is a boolean, pluralization will be activated.
 
 Pluralization is available with IStringLocalizer, IViewLocalizer and HtmlStringLocalizer :
 
-In version 3.1.1 and above you can have multiple pluralization, to use it, you should
-use IJsonStringLocalizer interface and this method ```LocalizedString GetPlural(string key, double count, params object[] arguments)```
+You can have multiple pluralization, to use it, you should
+use IJsonStringLocalizer interface and this method
+```LocalizedString GetPlural(string key, double count, params object[] arguments)```
 
 **localizer.GetString("Users", true)**;
 
 ### Clean Memory Cache
 
-Version 2.2.0+ allows you to clean cache.
+We allows you to clean cache.
 It's usefull when you want's tu update in live some translations.
 
 **Example**
@@ -112,7 +129,8 @@ public class HomeController{
 # Blazor Server HTML parsing
 
 As you know, Blazor Server does not provide IHtmlLocalizer. To avoid this, you can now use
-from **IJsonStringLocalizer** this method ```MarkupString GetHtmlBlazorString(string name, bool shouldTryDefaultCulture = true)```
+from **IJsonStringLocalizer** this method
+```MarkupString GetHtmlBlazorString(string name, bool shouldTryDefaultCulture = true)```
 
 # Information
 
@@ -120,27 +138,21 @@ from **IJsonStringLocalizer** this method ```MarkupString GetHtmlBlazorString(st
 
 | Platform      | Version |
 |---------------|:-------:|
-| NetCore       | 7.0.0+  |
-| Blazor Server | 7.0.0+  |
-| Blazor Wasm   | 7.0.0+  |
-
-
-
-**WithCulture method**
-
-**WhithCulture** method is not implemented and will not be implemented. ASP.NET Team, start to set this method **Obsolete** for version 3 and will be removed in version 4 of asp.net core.
-
-For more information :
-https://github.com/AlexTeixeira/Askmethat-Aspnet-JsonLocalizer/issues/46
+| NetCore       | 9.0.0+  |
+| Blazor Server | 9.0.0+  |
+| Blazor Wasm   | 9.0.0+  |
+| Blazor MAUI   | 9.0.0+  |
 
 # Localization mode
 
 As asked on the request #64, Some user want to have the possiblities to manage file with i18n way.
-To answer this demand, a localization mode was introduced with default value Basic. Basic version means the the one describe in the previous parts
+To answer this demand, a localization mode was introduced with default value Basic. Basic version means the the one
+describe in the previous parts
 
 ## I18n
 
-To use the i18n file management, use the the option Localization mode like this : ``` cs LocalizationMode = LocalizationMode.I18n ```.
+To use the i18n file management, use the the option Localization mode like this :
+``` cs LocalizationMode = LocalizationMode.I18n ```.
 After that, you should be able to use this json :
 
 ``` json
@@ -155,39 +167,8 @@ After that, you should be able to use this json :
 File name are important for some purpose (Culture looking, parent culture, fallback).
 
 Please use this pattern : **[fileName].[culture].json**
-If you need a fallback culture that target all culture, you can create a file named  **localisation.json**. Of course, if this file does not exist, the chosen default culture is the fallback.
-
-**Important: In this mode, the UseBaseName options should be False.**
-
-
-For more information :
-https://github.com/AlexTeixeira/Askmethat-Aspnet-JsonLocalizer/issues/64
-
-# Blazor Wasm
-
-### Specific Wasm Options
-
-- **JsonFileList** : *_default value: null*. List of json files to load. If null, all json files will be loaded.
-
-### Blazor Wasm Specificities
-
-Because of the way Blazor Wasm works, the plugin will not be able to load files from the server.
-To avoid this, you should embed your files in the project and use the following code :
-
-``` csproj
- <EmbeddedResource Include="Resources\localization.json">
-  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
- </EmbeddedResource>
-```
-
-The second specificities is the management of the language files.
-Blazor Wasm uses the file path as Assembly name, so you can't have multiple files with the same name.
-
-For example, if you have a file named **localization.json** in the folder **Resources**, 
-you can't have another file starting with name **localization** in the folder **Resources**, 
-a file with the name **localization.fr.json** will throw an exception.
-
-So you should have different folder for each language culture.
+If you need a fallback culture that target all culture, you can create a file named  **localisation.json**. Of course,
+if this file does not exist, the chosen default culture is the fallback.
 
 # Performances
 
@@ -199,19 +180,17 @@ AMD Ryzen 9 7950X3D, 1 CPU, 32 logical and 16 physical cores
 .NET SDK 9.0.100
   [Host]     : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
   DefaultJob : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-
-
 ```
-| Method                                          | Mean         | Error        | StdDev       | Min          | Max          | Ratio    | RatioSD | Gen0   | Gen1   | Allocated | Alloc Ratio |
-|------------------------------------------------ |-------------:|-------------:|-------------:|-------------:|-------------:|---------:|--------:|-------:|-------:|----------:|------------:|
-| Localizer                                       |     32.80 ns |     0.119 ns |     0.111 ns |     32.63 ns |     32.98 ns |     1.00 |    0.00 |      - |      - |         - |          NA |
-| JsonLocalizer                                   |     14.69 ns |     0.161 ns |     0.150 ns |     14.47 ns |     14.99 ns |     0.45 |    0.00 | 0.0010 |      - |      48 B |          NA |
-| JsonLocalizerWithCreation                       | 45,616.81 ns |   869.905 ns |   966.897 ns | 44,252.47 ns | 47,202.03 ns | 1,390.89 |   29.11 | 0.6104 | 0.4883 |   31008 B |          NA |
-| I18nJsonLocalizerWithCreation                   | 64,513.78 ns | 1,275.916 ns | 2,548.143 ns | 61,644.40 ns | 71,427.74 ns | 1,967.07 |   77.22 | 5.1270 | 4.8828 |   88483 B |          NA |
-| JsonLocalizerWithCreationAndExternalMemoryCache |  4,186.98 ns |    59.294 ns |    55.463 ns |  4,067.49 ns |  4,269.49 ns |   127.66 |    1.69 | 0.1144 | 0.1068 |    5824 B |          NA |
-| JsonLocalizerDefaultCultureValue                |     84.08 ns |     0.875 ns |     0.776 ns |     82.64 ns |     85.64 ns |     2.56 |    0.02 | 0.0052 |      - |     264 B |          NA |
-| LocalizerDefaultCultureValue                    |    105.14 ns |     1.347 ns |     1.260 ns |    102.46 ns |    107.33 ns |     3.21 |    0.04 | 0.0129 |      - |     216 B |          NA |
 
+| Method                                          |          Mean |        Error |       StdDev |           Min |           Max |    Ratio | RatioSD |   Gen0 |   Gen1 | Allocated | Alloc Ratio |
+|-------------------------------------------------|--------------:|-------------:|-------------:|--------------:|--------------:|---------:|--------:|-------:|-------:|----------:|------------:|
+| Localizer                                       |      31.83 ns |     0.140 ns |     0.117 ns |      31.62 ns |      32.00 ns |     1.00 |    0.01 |      - |      - |         - |          NA |
+| JsonLocalizer                                   |      11.70 ns |     0.030 ns |     0.027 ns |      11.67 ns |      11.75 ns |     0.37 |    0.00 |      - |      - |         - |          NA |
+| JsonLocalizerWithCreation                       | 140,762.12 ns | 2,813.586 ns | 5,810.543 ns | 126,991.04 ns | 150,169.03 ns | 4,422.62 |  181.61 | 3.9063 | 3.4180 |  203362 B |          NA |
+| I18nJsonLocalizerWithCreation                   |  87,809.74 ns |   285.333 ns |   238.266 ns |  87,211.17 ns |  88,223.01 ns | 2,758.90 |   12.16 | 9.7656 | 9.5215 |  166091 B |          NA |
+| JsonLocalizerWithCreationAndExternalMemoryCache |   4,411.59 ns |    63.052 ns |    58.979 ns |   4,301.21 ns |   4,500.86 ns |   138.61 |    1.86 | 0.1373 | 0.1297 |    7144 B |          NA |
+| JsonLocalizerDefaultCultureValue                |      76.77 ns |     1.097 ns |     0.857 ns |      74.63 ns |      77.90 ns |     2.41 |    0.03 | 0.0129 |      - |     216 B |          NA |
+| MicrosoftLocalizerDefaultCultureValue           |     108.21 ns |     1.132 ns |     1.059 ns |     106.70 ns |     110.48 ns |     3.40 |    0.03 | 0.0043 |      - |     216 B |          NA |
 
 # Contributors
 
@@ -299,7 +278,8 @@ AMD Ryzen 9 7950X3D, 1 CPU, 32 logical and 16 physical cores
 </table>
 
 A special thanks to @Compufreak345 for is hard work. He did a lot for this repo.<br/><br/>
-A special thanks to @EricApption for is work to improve the repo and making a very good stuff on migrating to net6 and System.Text.Json & making it working for blazor wasm
+A special thanks to @EricApption for is work to improve the repo and making a very good stuff on migrating to net6 and
+System.Text.Json & making it working for blazor wasm
 
 # License
 

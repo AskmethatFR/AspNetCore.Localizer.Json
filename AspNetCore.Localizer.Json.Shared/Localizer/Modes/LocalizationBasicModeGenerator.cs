@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
 
@@ -10,37 +11,30 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
     internal class LocalizationBasicModeGenerator : LocalizationModeBase, ILocalizationModeGenerator
     {
         public Dictionary<string, LocalizatedFormat> ConstructLocalization(
-            IEnumerable<string> myFiles, CultureInfo currentCulture, JsonLocalizationOptions options)
+            IEnumerable<string> resourceNames, CultureInfo currentCulture, JsonLocalizationOptions options)
         {
             _options = options;
 
-            var allFiles = new List<string>(myFiles);
-            if (_options.AdditionalResourcePaths != null)
-            {
-                foreach (var additionalPath in _options.AdditionalResourcePaths)
-                {
-                    if (Directory.Exists(additionalPath))
-                    {
-                        allFiles.AddRange(Directory.GetFiles(additionalPath, "*.json", SearchOption.AllDirectories));
-                    }
-                }
-            }
+            var parentCultureName = currentCulture.Parent.Name;
+            var defaultCultureName = _options.DefaultCulture?.Name;
 
-            foreach (string file in allFiles)
+            foreach (var resourceName in resourceNames)
             {
                 try
                 {
-                    var tempLocalization = LocalisationModeHelpers.ReadAndDeserializeFile<string, JsonLocalizationFormat>(file, options.FileEncoding);
+                    var tempLocalization = ReadAndDeserializeEmbeddedResource<string, JsonLocalizationFormat>(
+                        resourceName, options.FileEncoding);
+
                     if (tempLocalization == null)
                         continue;
 
                     foreach (var temp in tempLocalization)
                     {
-                        var localizedValue = GetLocalizedValue(currentCulture, temp);
+                        var localizedValue = GetLocalizedValue(currentCulture, parentCultureName, defaultCultureName, temp);
                         AddOrUpdateLocalizedValue(localizedValue, temp);
                     }
                 }
-                catch (Exception)
+                catch
                 {
                     if (!options.IgnoreJsonErrors)
                         throw;
@@ -50,35 +44,70 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return localization;
         }
 
-        private LocalizatedFormat GetLocalizedValue(CultureInfo currentCulture,
+        private LocalizatedFormat GetLocalizedValue(
+            CultureInfo currentCulture,
+            string parentCultureName,
+            string? defaultCultureName,
             KeyValuePair<string, JsonLocalizationFormat> temp)
         {
             var localizationFormat = temp.Value;
-            bool isParent = false;
-            string value = null;
 
-            // Optimized retrieval of value to reduce redundant lookups
-            if (localizationFormat.Values.TryGetValue(currentCulture.Name, out value))
+            if (localizationFormat.Values.TryGetValue(currentCulture.Name, out var value))
             {
-                return new LocalizatedFormat()
+                return new LocalizatedFormat
                 {
                     IsParent = false,
                     Value = value
                 };
             }
 
-            if (localizationFormat.Values.TryGetValue(currentCulture.Parent.Name, out value) ||
-                localizationFormat.Values.TryGetValue(string.Empty, out value) ||
-                (_options.DefaultCulture != null && localizationFormat.Values.TryGetValue(_options.DefaultCulture.Name, out value)))
+            if (localizationFormat.Values.TryGetValue(parentCultureName, out value))
             {
-                isParent = true;
+                return new LocalizatedFormat
+                {
+                    IsParent = true,
+                    Value = value
+                };
             }
 
-            return new LocalizatedFormat()
+            if (localizationFormat.Values.TryGetValue(string.Empty, out value))
             {
-                IsParent = isParent,
-                Value = value
+                return new LocalizatedFormat
+                {
+                    IsParent = true,
+                    Value = value
+                };
+            }
+
+            if (defaultCultureName != null && localizationFormat.Values.TryGetValue(defaultCultureName, out value))
+            {
+                return new LocalizatedFormat
+                {
+                    IsParent = true,
+                    Value = value
+                };
+            }
+
+            return new LocalizatedFormat
+            {
+                IsParent = false,
+                Value = null
             };
+        }
+
+        private Dictionary<TKey, TValue>? ReadAndDeserializeEmbeddedResource<TKey, TValue>(string resourceName, Encoding encoding)
+        {
+            var assembly = _options.AssemblyHelper.GetAssembly();
+
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
+            }
+
+            using var reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: false);
+            var json = reader.ReadToEnd();
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(json);
         }
     }
 }

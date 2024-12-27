@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using AspNetCore.Localizer.Json.Format;
@@ -22,132 +23,147 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         }
 
         public Dictionary<string, LocalizatedFormat> ConstructLocalization(
-            IEnumerable<string> myFiles,
+            IEnumerable<string> resourceNames,
             CultureInfo currentCulture,
             JsonLocalizationOptions options)
         {
-            var filesList = myFiles.ToList();
-            bool isInvariantCulture =
-                currentCulture.Name.Equals(CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
-
-            // Collect culture-specific and neutral files separately
-            var cultureSpecificFiles = filesList.Where(file =>
+            foreach (var resourceName in resourceNames)
             {
-                var fileName = Path.GetFileName(file);
-                return fileName.Contains(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
-                       (!isInvariantCulture &&
-                        fileName.Contains(currentCulture.Parent.Name, StringComparison.OrdinalIgnoreCase));
-            }).ToList();
-
-            // If culture-specific files are found, skip loading neutral files
-            if (cultureSpecificFiles.Any())
-            {
-                foreach (string file in cultureSpecificFiles)
+                string cultureName = GetCultureNameFromResource(resourceName);
+                if (!string.IsNullOrEmpty(cultureName))
                 {
-                    string cultureName = GetCultureNameFromFile(Path.GetFileName(file));
-                    if (!string.IsNullOrEmpty(cultureName))
+                    bool isParent;
+                    try
                     {
                         var fileCulture = new CultureInfo(cultureName);
-                        bool isParent = fileCulture.Name.Equals(currentCulture.Parent.Name,
-                            StringComparison.OrdinalIgnoreCase);
-
-                        if (fileCulture.Name.Equals(currentCulture.Name, StringComparison.OrdinalIgnoreCase) ||
-                            (isParent && fileCulture.Name != "json"))
-                        {
-                            AddValueToLocalization(options, file, isParent);
-                        }
+                        isParent = fileCulture.Name.Equals(currentCulture.Parent.Name,
+                                       StringComparison.OrdinalIgnoreCase)
+                                   || fileCulture.IsNeutralCulture;
                     }
-                }
-            }
-            else
-            {
-                // If no culture-specific files, load the neutral files
-                var neutralFiles = filesList.Where(file => Path.GetFileName(file).Count(s => s == '.') == 1);
-                foreach (string neutralFile in neutralFiles)
-                {
-                    AddValueToLocalization(options, neutralFile, true);
+                    catch
+                    {
+                        isParent = true;
+                    }
+
+                    AddValueToLocalization(options, resourceName, isParent);
                 }
             }
 
             return localization;
         }
 
-        private static string GetCultureNameFromFile(string fileName)
+        private static string GetCultureNameFromResource(string resourceName)
         {
-            // Optimized with ReadOnlySpan to avoid allocation
-            ReadOnlySpan<char> fileNameSpan = fileName.AsSpan();
-            int lastDotIndex = fileNameSpan.LastIndexOf('.');
+            ReadOnlySpan<char> resourceSpan = resourceName.AsSpan();
+            int lastDotIndex = resourceSpan.LastIndexOf('.');
             if (lastDotIndex > 0)
             {
-                int secondLastDotIndex = fileNameSpan.Slice(0, lastDotIndex).LastIndexOf('.');
+                int secondLastDotIndex = resourceSpan.Slice(0, lastDotIndex).LastIndexOf('.');
                 if (secondLastDotIndex >= 0)
                 {
-                    return fileNameSpan.Slice(secondLastDotIndex + 1, lastDotIndex - secondLastDotIndex - 1).ToString();
+                    return resourceSpan.Slice(secondLastDotIndex + 1, lastDotIndex - secondLastDotIndex - 1).ToString();
                 }
             }
 
             return string.Empty;
         }
 
-        private static readonly JsonDocumentOptions Options = new JsonDocumentOptions()
+
+        private static readonly JsonDocumentOptions JsonOptions = new JsonDocumentOptions()
         {
             CommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true
         };
 
-        internal void AddValueToLocalization(JsonLocalizationOptions options, string file, bool isParent)
+        private void AddValueToLocalization(JsonLocalizationOptions options, string resourceName, bool isParent)
         {
             try
             {
-                using FileStream stream = new FileStream(file, FileMode.Open, FileAccess.Read);
-                using JsonDocument document = JsonDocument.Parse(stream, Options);
-
-                JsonElement root = document.RootElement;
-                Stack<(JsonElement element, StringBuilder baseName)> stack = new Stack<(JsonElement, StringBuilder)>();
-                stack.Push((root, new StringBuilder()));
-
-                while (stack.Count > 0)
+                var assembly = options.AssemblyHelper.GetAssembly();
+                using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
                 {
-                    var (currentElement, currentBaseName) = stack.Pop();
+                    throw new FileNotFoundException($"La ressource incorporée '{resourceName}' est introuvable.");
+                }
 
-                    if (currentElement.ValueKind == JsonValueKind.Object)
+                if (stream.CanSeek)
+                {
+                    Span<byte> bom = stackalloc byte[3];
+                    stream.ReadExactly(bom);
+                    if (!bom.SequenceEqual(new byte[] { 0xEF, 0xBB, 0xBF }))
                     {
-                        foreach (JsonProperty property in currentElement.EnumerateObject())
-                        {
-                            int originalLength = currentBaseName.Length;
-                            if (originalLength > 0)
-                            {
-                                currentBaseName.Append('.').Append(property.Name);
-                            }
-                            else
-                            {
-                                currentBaseName.Append(property.Name);
-                            }
+                        stream.Seek(0, SeekOrigin.Begin);
+                    }
+                }
 
-                            if (property.Value.ValueKind == JsonValueKind.Object)
-                            {
-                                stack.Push((property.Value, new StringBuilder(currentBaseName.ToString())));
-                            }
-                            else if (property.Value.ValueKind == JsonValueKind.Array)
-                            {
-                                throw new ArgumentException("Invalid i18n Json");
-                            }
-                            else
-                            {
-                                string key = currentBaseName.ToString();
-                                var localizedValue = GetLocalizedValue(new KeyValuePair<string, string>(key, property.Value.GetString()), isParent);
-                                AddOrUpdateLocalizedValue(localizedValue, new KeyValuePair<string, string>(key, property.Value.GetString()));
-                            }
+                byte[] buffer = new byte[8192]; 
+                int bytesRead;
 
-                            // Reset StringBuilder to its original state for reuse
-                            currentBaseName.Length = originalLength;
-                        }
+                var readerOptions = new JsonReaderOptions
+                {
+                    AllowTrailingCommas = true,
+                    CommentHandling = JsonCommentHandling.Skip
+                };
+
+                using MemoryStream memoryStream = new MemoryStream();
+
+                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    memoryStream.Write(buffer, 0, bytesRead);
+                }
+
+                ReadOnlySpan<byte> jsonData = new ReadOnlySpan<byte>(memoryStream.ToArray());
+
+                var jsonReader = new Utf8JsonReader(jsonData, readerOptions);
+
+                while (jsonReader.Read())
+                {
+                    if (jsonReader.TokenType == JsonTokenType.StartObject)
+                    {
+                        TraverseJson(ref jsonReader, string.Empty, isParent);
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new InvalidDataException($"Error reading file '{file}'", ex);
+                throw new InvalidDataException($"Erreur lors de la lecture de la ressource incorporée '{resourceName}'",
+                    ex);
+            }
+        }
+
+        private void TraverseJson(ref Utf8JsonReader jsonReader, string baseKey, bool isParent)
+        {
+            string currentProperty = baseKey;
+
+            while (jsonReader.Read())
+            {
+                switch (jsonReader.TokenType)
+                {
+                    case JsonTokenType.PropertyName:
+                        currentProperty = string.IsNullOrEmpty(baseKey)
+                            ? jsonReader.GetString()
+                            : $"{baseKey}.{jsonReader.GetString()}";
+                        break;
+
+                    case JsonTokenType.String:
+                        string value = jsonReader.GetString() ?? string.Empty;
+                        AddOrUpdateLocalizedValue(
+                            GetLocalizedValue(new KeyValuePair<string, string>(currentProperty, value), isParent),
+                            new KeyValuePair<string, string>(currentProperty, value)
+                        );
+                        break;
+
+                    case JsonTokenType.StartObject:
+                        TraverseJson(ref jsonReader, currentProperty, isParent);
+                        break;
+
+                    case JsonTokenType.EndObject:
+                        return;
+
+                    case JsonTokenType.StartArray:
+                        throw new ArgumentException(
+                            "Le JSON i18n est invalide : les tableaux ne sont pas pris en charge.");
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 using LocalizedString = Microsoft.Extensions.Localization.LocalizedString;
 
@@ -29,8 +30,10 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                      new CultureInfo("zh-CN"),
                      new CultureInfo("en-AU")
                 },
-                ResourcesPath = $"{AppContext.BaseDirectory}/i18nFallback",
-                LocalizationMode = LocalizationMode.I18n
+                ResourcesPath = $"i18nFallback",
+                LocalizationMode = LocalizationMode.I18n,
+                AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly())
+
             });
         }
 

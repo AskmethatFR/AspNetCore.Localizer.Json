@@ -17,13 +17,9 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             switch (localizationMode)
             {
-                case LocalizationMode.BlazorWasm:
-                    localizationModeGenerator = new LocalizationBlazorWasmModeGenerator(assembly);
-                    break;
                 case LocalizationMode.I18n:
                     localizationModeGenerator = new LocalizationI18NModeGenerator();
                     break;
-
                 default:
                     localizationModeGenerator = new LocalizationBasicModeGenerator();
                     break;

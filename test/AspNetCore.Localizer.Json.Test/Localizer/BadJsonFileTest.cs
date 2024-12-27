@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Globalization;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 
 namespace AspNetCore.Localizer.Json.Test.Localizer
@@ -22,10 +23,9 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                 {
                      new CultureInfo("fr-FR")
                 },
-                ResourcesPath = $"{AppContext.BaseDirectory}/path",
-                AdditionalResourcePaths = new[] { $"{AppContext.BaseDirectory}/path2", $"{AppContext.BaseDirectory}/path3" },
-                IsAbsolutePath = true,
-                IgnoreJsonErrors = true
+                ResourcesPath = $"path",
+                IgnoreJsonErrors = true,
+                AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly()),
             }); ;
         }
 
@@ -40,7 +40,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
 
             LocalizedString result2 = localizer.GetString("Name3");
 
-            Assert.AreEqual("Mon Nom 3", result2);
+            Assert.AreEqual("Name3", result2);
         }
 
     }

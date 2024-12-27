@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
@@ -49,15 +51,14 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
             services.AddJsonLocalization(options =>
             {
                 options.ResourcesPath = _jsonLocalizationOptions.ResourcesPath;
-                options.AdditionalResourcePaths = _jsonLocalizationOptions.AdditionalResourcePaths;
-                options.UseBaseName = _jsonLocalizationOptions.UseBaseName;
+                options.AdditionalResourcesPaths = _jsonLocalizationOptions.AdditionalResourcesPaths;
                 options.CacheDuration = _jsonLocalizationOptions.CacheDuration;
                 options.SupportedCultureInfos = _jsonLocalizationOptions.SupportedCultureInfos;
                 options.FileEncoding = _jsonLocalizationOptions.FileEncoding;
-                options.IsAbsolutePath = _jsonLocalizationOptions.IsAbsolutePath;
                 options.MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON;
                 options.LocalizationMode = LocalizationMode.I18n;
                 options.LocalizerDiagnosticMode = _jsonLocalizationOptions.LocalizerDiagnosticMode;
+                options.AssemblyHelper = new AssemblyHelper(Assembly.GetExecutingAssembly());
             });
             
             services.Configure<RequestLocalizationOptions>(options =>

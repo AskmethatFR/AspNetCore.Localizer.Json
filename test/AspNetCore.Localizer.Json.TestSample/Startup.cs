@@ -50,11 +50,9 @@ namespace AspNetCore.Localizer.Json.TestSample
             _ = services.AddJsonLocalization(options =>
             {
                 options.ResourcesPath = _jsonLocalizationOptions.ResourcesPath;
-                options.UseBaseName = _jsonLocalizationOptions.UseBaseName;
                 options.CacheDuration = _jsonLocalizationOptions.CacheDuration;
                 options.SupportedCultureInfos = _jsonLocalizationOptions.SupportedCultureInfos;
                 options.FileEncoding = _jsonLocalizationOptions.FileEncoding;
-                options.IsAbsolutePath = _jsonLocalizationOptions.IsAbsolutePath;
                 options.DefaultCulture = _defaultRequestCulture.Culture;
                 options.DefaultUICulture = _defaultRequestCulture.UICulture;
             });

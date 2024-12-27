@@ -3,6 +3,7 @@ using AspNetCore.Localizer.Json.Test.Helpers;
 using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Globalization;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 
 namespace AspNetCore.Localizer.Json.Test.Localizer
@@ -21,8 +22,10 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                 {
                      new CultureInfo("fr-FR")
                 },
-                ResourcesPath = "json",
+                ResourcesPath = "json_files",
+                AssemblyHelper = new AssemblyStub(Assembly.GetExecutingAssembly())
             });
+            
         }
 
         [TestMethod]

@@ -9,6 +9,7 @@
     <Import_RootNamespace>AspNetCore.Localizer.Json.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Commons\IAssemblyHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Format\JsonLocalizationFormat.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JsonOptions\JsonLocalizationOptions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JsonOptions\LocalizationMode.cs" />
@@ -18,9 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\JsonStringLocalizer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\JsonStringLocalizerBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\ILocalizationModeGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalisationModeHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationBasicModeGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationBlazorWasmModeGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationI18NModeGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationModeBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationModeFactory.cs" />

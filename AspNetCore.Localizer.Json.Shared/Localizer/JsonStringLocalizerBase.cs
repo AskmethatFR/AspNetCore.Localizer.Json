@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using AspNetCore.Localizer.Json.Caching;
+using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
 using AspNetCore.Localizer.Json.Localizer.Modes;
@@ -13,90 +12,91 @@ namespace AspNetCore.Localizer.Json.Localizer
 {
     internal class JsonStringLocalizerBase
     {
+        private readonly string _baseName;
+
         #region Properties and Constructor
 
-        protected readonly CacheHelper _memCache;
-        protected readonly IOptions<JsonLocalizationOptions> _localizationOptions;
-        private readonly EnvironmentWrapper _environment;
-        protected readonly string _baseName;
-        protected readonly TimeSpan _memCacheDuration;
+        protected CacheHelper MemCache;
+        protected IOptions<JsonLocalizationOptions> LocalizationOptions;
+        private TimeSpan _memCacheDuration;
 
-        protected const string CACHE_KEY = "LocalizationBlob";
-        protected readonly List<string> resourcesRelativePaths = new();
-        protected string currentCulture = string.Empty;
-        protected Dictionary<string, LocalizatedFormat> localization = new();
-        protected readonly Lazy<Dictionary<string, IPluralizationRuleSet>> pluralizationRuleSets = new(() => new Dictionary<string, IPluralizationRuleSet>());
+        private const string CacheKey = "LocalizationBlob";
+        protected readonly List<string> ResourcesRelativePaths = new();
+        private string _currentCulture = string.Empty;
+        protected Dictionary<string, LocalizatedFormat> Localization = new();
+        private readonly Lazy<Dictionary<string, IPluralizationRuleSet>> _pluralizationRuleSets = new(() => new Dictionary<string, IPluralizationRuleSet>());
 
-        public JsonStringLocalizerBase(
-            IOptions<JsonLocalizationOptions> localizationOptions,
-            EnvironmentWrapper environment = null,
-            string baseName = null)
+        private IAssemblyHelper _assemblyHelper;
+
+        protected JsonStringLocalizerBase(IOptions<JsonLocalizationOptions> localizationOptions)
         {
-            _baseName = CleanBaseName(baseName);
-            _localizationOptions = localizationOptions;
-            _environment = environment;
-
-            ValidateOptions();
-
-            _memCache = _localizationOptions.Value.DistributedCache != null
-                ? new CacheHelper(_localizationOptions.Value.DistributedCache)
-                : new CacheHelper(_localizationOptions.Value.Caching);
-
-            _memCacheDuration = _localizationOptions.Value.CacheDuration;
+            Initialize(localizationOptions);
         }
-        #endregion
-
-        #region Validation
-
-        private void ValidateOptions()
+        
+        protected JsonStringLocalizerBase(IOptions<JsonLocalizationOptions> localizationOptions, string baseName)
         {
-            if (_localizationOptions.Value.LocalizationMode == LocalizationMode.I18n && _localizationOptions.Value.UseBaseName)
-                throw new ArgumentException("UseBaseName can't be activated with I18n localisation mode");
-
-            if (_environment?.IsWasm == true && (_localizationOptions.Value.JsonFileList?.Length ?? 0) == 0)
-                throw new ArgumentException("JsonFileList is required in Client WASM mode");
+            _baseName = baseName;
+            Initialize(localizationOptions);
         }
+
+        private void Initialize(IOptions<JsonLocalizationOptions> localizationOptions)
+        {
+            LocalizationOptions = localizationOptions;
+
+            _assemblyHelper = localizationOptions.Value.AssemblyHelper;
+            
+            MemCache = LocalizationOptions.Value.DistributedCache != null
+                ? new CacheHelper(LocalizationOptions.Value.DistributedCache)
+                : new CacheHelper(LocalizationOptions.Value.Caching);
+
+            _memCacheDuration = LocalizationOptions.Value.CacheDuration;
+        }
+
         #endregion
 
         #region Cache and Culture Methods
 
-        protected string GetCacheKey(CultureInfo ci) => $"{CACHE_KEY}_{ci.Name}";
+        protected string GetCacheKey(CultureInfo ci) => $"{CacheKey}_{ci.Name}";
 
-        private void SetCurrentCultureToCache(CultureInfo ci) => currentCulture = ci.Name;
+        private void SetCurrentCultureToCache(CultureInfo ci) => _currentCulture = ci.Name;
 
-        protected bool IsUICultureCurrentCulture(CultureInfo ci) =>
-            string.Equals(currentCulture, ci.Name, StringComparison.OrdinalIgnoreCase);
+        protected bool IsUiCultureCurrentCulture(CultureInfo ci) =>
+            string.Equals(_currentCulture, ci.Name, StringComparison.OrdinalIgnoreCase);
 
         protected void GetCultureToUse(CultureInfo cultureToUse)
         {
-            if (_memCache.TryGetValue(GetCacheKey(cultureToUse), out localization))
+            string[] cacheKeys = {
+                GetCacheKey(cultureToUse),
+                GetCacheKey(cultureToUse.Parent),
+                LocalizationOptions.Value.DefaultCulture != null ? GetCacheKey(LocalizationOptions.Value.DefaultCulture) : null
+            };
+
+            foreach (var key in cacheKeys)
             {
-                SetCurrentCultureToCache(cultureToUse);
-                return;
+                if (key != null && MemCache.TryGetValue(key, out Localization))
+                {
+                    _currentCulture = cultureToUse.Name;
+                    return;
+                }
             }
 
-            if (_memCache.TryGetValue(GetCacheKey(cultureToUse.Parent), out localization))
-            {
-                SetCurrentCultureToCache(cultureToUse.Parent);
-                return;
-            }
-
-            if (_localizationOptions.Value.DefaultCulture != null &&
-                _memCache.TryGetValue(GetCacheKey(_localizationOptions.Value.DefaultCulture), out localization))
-            {
-                SetCurrentCultureToCache(_localizationOptions.Value.DefaultCulture);
-                return;
-            }
-
-            localization = new Dictionary<string, LocalizatedFormat>();
+            Localization = Localization ?? new Dictionary<string, LocalizatedFormat>();
         }
 
 
+        private readonly Dictionary<string, IPluralizationRuleSet> _cachedPluralizationRules = new();
+
         protected IPluralizationRuleSet GetPluralizationToUse()
         {
-            return pluralizationRuleSets.Value.TryGetValue(currentCulture, out var ruleSet)
-                ? ruleSet
-                : new DefaultPluralizationRuleSet();
+            if (!_cachedPluralizationRules.TryGetValue(_currentCulture, out var ruleSet))
+            {
+                ruleSet = _pluralizationRuleSets.Value.TryGetValue(_currentCulture, out var foundRuleSet)
+                    ? foundRuleSet
+                    : new DefaultPluralizationRuleSet();
+                _cachedPluralizationRules[_currentCulture] = ruleSet;
+            }
+
+            return ruleSet;
         }
         #endregion
 
@@ -104,90 +104,96 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         protected void AddMissingCultureToSupportedCulture(CultureInfo cultureInfo)
         {
-            _localizationOptions.Value.SupportedCultureInfos.Add(cultureInfo);
+            LocalizationOptions.Value.SupportedCultureInfos.Add(cultureInfo);
         }
 
         protected bool InitJsonStringLocalizer(CultureInfo currentCulture)
         {
-            if (!_memCache.TryGetValue(GetCacheKey(currentCulture), out localization))
+            if (!MemCache.TryGetValue(GetCacheKey(currentCulture), out Localization))
             {
-                ConstructLocalizationObject(resourcesRelativePaths, currentCulture);
-                _memCache.Set(GetCacheKey(currentCulture), localization, _memCacheDuration);
+                ConstructLocalizationObject(currentCulture);
+                MemCache.Set(GetCacheKey(currentCulture), Localization, _memCacheDuration);
                 return false;
             }
             
             return true;
         }
 
-        private void ConstructLocalizationObject(List<string> jsonPath, CultureInfo currentCulture)
+        private void ConstructLocalizationObject(CultureInfo currentCulture)
         {
-            localization ??= new Dictionary<string, LocalizatedFormat>();
+            Localization ??= new Dictionary<string, LocalizatedFormat>();
 
-            if (_environment?.IsWasm == true && (_localizationOptions.Value.JsonFileList?.Length ?? 0) == 0)
-                throw new ArgumentException("JsonFileList is required in Client WASM mode");
-
-            var myFiles = GetJsonFilesPath(jsonPath);
-            localization = LocalizationModeFactory
-                .GetLocalisationFromMode(_localizationOptions.Value.LocalizationMode, _localizationOptions.Value.Assembly)
-                .ConstructLocalization(myFiles, currentCulture, _localizationOptions.Value);
+            var myFiles = GetJsonFilesPath(currentCulture).ToArray(); 
+            if (myFiles.Length > 0)
+            {
+                var localizationMode = LocalizationModeFactory.GetLocalisationFromMode(LocalizationOptions.Value.LocalizationMode);
+                Localization = localizationMode.ConstructLocalization(myFiles, currentCulture, LocalizationOptions.Value);
+            }
         }
 
-        private IEnumerable<string> GetJsonFilesPath(List<string> jsonPaths)
+        private IEnumerable<string> GetJsonFilesPath(CultureInfo culture)
         {
-            const string searchPattern = "*.json";
-            const string sharedSearchPattern = "*.shared.json";
+            var assembly =  _assemblyHelper.GetAssembly();
+            var resourceNames = assembly.GetManifestResourceNames();
 
-            List<string> files = new();
+            var pathToLook = LocalizationOptions.Value.ResourcesPath ?? string.Empty;
+            var additionalPath = LocalizationOptions.Value.AdditionalResourcesPaths ?? Array.Empty<string>();
 
-            foreach (var jsonPath in jsonPaths)
+            var cultureSpecificFile = $"{culture.Name}"; 
+            var cultureNeutralFile = $"{culture.TwoLetterISOLanguageName}"; 
+
+            var defaultFile = $".json"; 
+
+            return resourceNames
+                .Where(name =>
+                    (additionalPath.Any(path => name.Contains($".{path}.", StringComparison.OrdinalIgnoreCase)) ||
+                    name.Contains($".{pathToLook}.", StringComparison.OrdinalIgnoreCase)) &&
+                    WithBaseName(name) &&
+                    IsRelevantCultureFile(name, cultureSpecificFile, cultureNeutralFile, defaultFile, culture))
+                .ToList();
+        }
+        
+        
+        
+        private bool WithBaseName(string name)
+        {
+            if (string.IsNullOrEmpty(_baseName))
             {
-                string basePath = jsonPath;
-
-                if (_localizationOptions.Value.UseBaseName && !string.IsNullOrWhiteSpace(_baseName))
+                return true;
+            }
+            
+            return name.Contains(_baseName, StringComparison.OrdinalIgnoreCase);
+        }
+        private bool IsRelevantCultureFile(string resourceName,
+            string cultureSpecificFile,
+            string cultureNeutralFile,
+            string defaultFile, CultureInfo culture)
+        {
+            
+            if (resourceName.EndsWith(defaultFile, StringComparison.OrdinalIgnoreCase))
+            {
+                var prefix = resourceName.Substring(0, resourceName.LastIndexOf(defaultFile, StringComparison.OrdinalIgnoreCase));
+                var lastSegment = prefix.Split('.').Last();
+                
+                var allCultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+                
+                //if the last segment is not a culture, we take the file because if neutral culture is not the same as the parent culture
+                if (!allCultures.Any(c => c.Name.Equals(lastSegment, StringComparison.OrdinalIgnoreCase)))
                 {
-                    basePath = Path.Combine(jsonPath, TransformNameToPath(_baseName));
-                    if (Directory.Exists(basePath))
-                    {
-                        files.AddRange(Directory.GetFiles(basePath, searchPattern, SearchOption.TopDirectoryOnly));
-                    }
+                    return true;
                 }
-                else
+                
+                bool isInvariantCulture = string.Equals(lastSegment, CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
+                
+                if (lastSegment.Equals(cultureSpecificFile, StringComparison.OrdinalIgnoreCase) ||
+                    (lastSegment.Equals(cultureNeutralFile, StringComparison.OrdinalIgnoreCase) &&
+                     !isInvariantCulture))
                 {
-                    files.AddRange(Directory.GetFiles(basePath, searchPattern, SearchOption.AllDirectories));
+                    return true;
                 }
-
-                // Add shared files
-                files.AddRange(Directory.GetFiles(basePath, sharedSearchPattern, SearchOption.TopDirectoryOnly));
-                files.AddRange(Directory.GetFiles(jsonPath, "localization.shared.json", SearchOption.TopDirectoryOnly));
             }
 
-            return files.Distinct();
-        }
-        #endregion
-
-        #region Helper Methods
-
-        private string TransformNameToPath(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-                return string.Empty;
-
-            // Use Span<char> to replace '.' with the directory separator, to minimize allocations
-            ReadOnlySpan<char> nameSpan = name.AsSpan();
-            Span<char> transformedName = stackalloc char[name.Length];
-            for (int i = 0; i < nameSpan.Length; i++)
-            {
-                transformedName[i] = nameSpan[i] == '.' ? Path.DirectorySeparatorChar : nameSpan[i];
-            }
-            return new string(transformedName);
-        }
-
-        private string CleanBaseName(string baseName)
-        {
-            if (string.IsNullOrEmpty(baseName)) return string.Empty;
-
-            var plusIdx = baseName.IndexOf('+');
-            return plusIdx == -1 ? baseName : baseName.Substring(0, plusIdx);
+            return false;
         }
         #endregion
     }

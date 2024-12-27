@@ -10,6 +10,5 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
     {
         Dictionary<string, LocalizatedFormat> ConstructLocalization(
             IEnumerable<string> myFiles, CultureInfo currentCulture, JsonLocalizationOptions options);
-
     }
 }

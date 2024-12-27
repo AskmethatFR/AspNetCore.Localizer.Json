@@ -26,7 +26,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             // Optimize dictionary access to minimize redundant lookups
             if (localization.TryGetValue(temp.Key, out var existingValue))
             {
-                if (existingValue.IsParent)
+                if (existingValue.IsParent && !localizedValue.IsParent)
                 {
                     localization[temp.Key] = localizedValue;
                 }

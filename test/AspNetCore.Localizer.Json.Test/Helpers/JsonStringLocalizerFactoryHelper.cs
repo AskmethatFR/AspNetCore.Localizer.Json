@@ -10,9 +10,14 @@ namespace AspNetCore.Localizer.Json.Test.Helpers
         {
         }
 
-        public static JsonStringLocalizer Create(JsonLocalizationOptions options, string baseName = null)
+        public static JsonStringLocalizer Create(JsonLocalizationOptions options)
         {
-            return new JsonStringLocalizer(Options.Create(options), new EnvironmentWrapper(new HostingEnvironmentStub()), baseName);
+            return new JsonStringLocalizer(Options.Create(options));
+        }
+        
+        public static JsonStringLocalizer Create(JsonLocalizationOptions options, string baseName)
+        {
+            return new JsonStringLocalizer(Options.Create(options), baseName);
         }
     }
 }

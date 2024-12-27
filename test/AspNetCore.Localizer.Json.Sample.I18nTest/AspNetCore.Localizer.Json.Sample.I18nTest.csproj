@@ -9,16 +9,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Update="i18n\localization.en-US.json">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-      <Content Update="i18n\localization.fr-FR.json">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
+        <EmbeddedResource Include="i18n\**\*.json" WithCulture="false" />
     </ItemGroup>
 
 </Project>

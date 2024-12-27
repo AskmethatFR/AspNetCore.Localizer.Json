@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 using AspNetCore.Localizer.Json.Localizer;
 using AspNetCore.Localizer.Json.Test.Helpers;
@@ -13,36 +14,25 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
     [TestClass]
     public class JsonI18nLocalizer
     {
-        private JsonLocalizationOptions _jsonLocalizationOptions = new JsonLocalizationOptions()
-        {
-            DefaultCulture = new CultureInfo("fr-FR"),
-            SupportedCultureInfos = new HashSet<CultureInfo>()
-            {
-                new CultureInfo("fr-FR"),
-                new CultureInfo("en-US")
-            },
-            ResourcesPath = $"{AppContext.BaseDirectory}/i18n",
-            LocalizationMode = LocalizationMode.I18n
-        };
+        private JsonLocalizationOptions _jsonLocalizationOptions;
         [TestInitialize]
         public void Init()
         {
             CultureInfo.CurrentUICulture = new CultureInfo("en-US");
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentException),
-            "UseBaseName can't be activated with I18n LocalisationMode")]
-        public void I18n_OptionValidation()
-        {
-            // Arrange           
-            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            
+            _jsonLocalizationOptions = new JsonLocalizationOptions()
             {
                 DefaultCulture = new CultureInfo("fr-FR"),
-                ResourcesPath = $"{AppContext.BaseDirectory}/i18n",
+                SupportedCultureInfos = new HashSet<CultureInfo>()
+                {
+                    new CultureInfo("fr-FR"),
+                    new CultureInfo("en-US")
+                },
+                ResourcesPath = $"i18n",
                 LocalizationMode = LocalizationMode.I18n,
-                UseBaseName = true
-            });
+                AssemblyHelper = new AssemblyStub(Assembly.GetExecutingAssembly())
+            };
+
         }
         
         [TestMethod]

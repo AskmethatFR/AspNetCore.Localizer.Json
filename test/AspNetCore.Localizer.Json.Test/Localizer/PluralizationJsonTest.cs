@@ -3,6 +3,7 @@ using AspNetCore.Localizer.Json.Test.Helpers;
 using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Globalization;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 
 namespace AspNetCore.Localizer.Json.Test.Localizer
@@ -25,7 +26,8 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                      new CultureInfo("fr-FR"),
                 },
                 ResourcesPath = "pluralization",
-                PluralSeparator = seperator
+                PluralSeparator = seperator,
+                AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly())
             });
         }
 

@@ -1,7 +1,10 @@
 using System.Globalization;
+using System.Reflection;
 using System.Text;
+using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Extensions;
 using AspNetCore.Localizer.Json.JsonOptions;
+using AspNetCore.Localizer.Json.Sample.MAUI.Shared;
 using AspNetCore.Localizer.Json.Sample.MAUI.Web.Components;
 using AspNetCore.Localizer.Json.Sample.MAUI.Shared.Services;
 using AspNetCore.Localizer.Json.Sample.MAUI.Web.Services;
@@ -16,17 +19,8 @@ builder.Services.AddRazorComponents()
 // Add device-specific services used by the AspNetCore.Localizer.Json.Sample.MAUI.Shared project
 builder.Services.AddSingleton<IFormFactor, FormFactor>();
 
-builder.Services.AddLocalization();
-builder.Services.AddJsonLocalization(options => {
-    options.CacheDuration = TimeSpan.FromMinutes(15);
-    options.ResourcesPath = "Resources";
-    options.LocalizationMode = LocalizationMode.I18n;
-    options.FileEncoding = Encoding.GetEncoding("ISO-8859-1");
-    options.SupportedCultureInfos = new HashSet<CultureInfo>()
-    {
-        new CultureInfo("fr-FR")
-    };
-});
+builder.Services.AddShared();
+
 
 var app = builder.Build();
 

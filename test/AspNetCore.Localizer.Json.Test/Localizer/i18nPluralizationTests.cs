@@ -3,6 +3,7 @@ using AspNetCore.Localizer.Json.Test.Helpers;
 using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Globalization;
+using System.Reflection;
 using AspNetCore.Localizer.Json.JsonOptions;
 
 namespace AspNetCore.Localizer.Json.Test.Localizer
@@ -11,7 +12,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
     public class i18nPluralizationTests
     {
         private JsonStringLocalizer localizer = null;
-        public void InitLocalizer(char seperator = '|', string currentCulture = "en-US")
+        public void InitLocalizer(char separator = '|', string currentCulture = "en-US")
         {
             CultureInfo.CurrentUICulture = new CultureInfo(currentCulture);
 
@@ -24,8 +25,9 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                      new CultureInfo("es-UY"),
                 },
                 ResourcesPath = "i18nPluralization",
-                PluralSeparator = seperator,
-                LocalizationMode = LocalizationMode.I18n
+                PluralSeparator = separator,
+                LocalizationMode = LocalizationMode.I18n,
+                AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly())
             });
         }
 
