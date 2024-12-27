@@ -15,16 +15,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore -c Release
-    - name: Test
-      run: dotnet test --verbosity normal
-      working-directory: test/AspNetCore.Localizer.Json.Test
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: test/AspNetCore.Localizer.Json.Test
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+        working-directory: test/AspNetCore.Localizer.Json.Test
+
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal -c Release
+        working-directory: test/AspNetCore.Localizer.Json.Test
 
