@@ -26,10 +26,10 @@ jobs:
         working-directory: test/AspNetCore.Localizer.Json.Test
 
       - name: Build
-        run: dotnet build --no-restore -c Release /p:Version=${GITHUB_REF_NAME#refs/tags/}
+        run: dotnet build --no-restore -c Release
         working-directory: test/AspNetCore.Localizer.Json.Test
 
       - name: Test
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet test --no-restore --verbosity normal -c Release
         working-directory: test/AspNetCore.Localizer.Json.Test
 
