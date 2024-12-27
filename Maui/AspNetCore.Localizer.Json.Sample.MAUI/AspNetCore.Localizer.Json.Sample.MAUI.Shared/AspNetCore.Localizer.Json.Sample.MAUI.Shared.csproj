@@ -11,8 +11,9 @@
     </ItemGroup>
 
     <ItemGroup>
+<!--        <PackageReference Include="AspNetCore.Localizer.Json" Version="1.0.0" />-->
+        <PackageReference Include="Fluxor.Blazor.Web" Version="6.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="9.0.0" />
     </ItemGroup>
 
     <ItemGroup>

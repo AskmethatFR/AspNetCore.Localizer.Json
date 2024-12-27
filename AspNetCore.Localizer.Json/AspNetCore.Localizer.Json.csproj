@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
         <LangVersion>latest</LangVersion>
 	</PropertyGroup>
     
@@ -47,8 +48,6 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Components" Version="9.0.0" />
       <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
       <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.0" />
     </ItemGroup>
     
