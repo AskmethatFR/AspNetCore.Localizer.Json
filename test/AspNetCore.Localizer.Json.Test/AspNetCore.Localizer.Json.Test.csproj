@@ -85,4 +85,14 @@
     <ItemGroup>
         <Compile Remove="Localizer\JsonLocalizerTestBase.cs"/>
     </ItemGroup>
+    <ItemGroup>
+      <None Remove="interpolation\interpolation.en.json" />
+      <Content Include="interpolation\interpolation.en.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="interpolation\interpolation.fr.json" />
+      <Content Include="interpolation\interpolation.fr.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
 </Project>

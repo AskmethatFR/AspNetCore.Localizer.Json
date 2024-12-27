@@ -1,0 +1,3 @@
+{
+  "This workspace has consumed {0}% of its budget. It is recommended to monitor the usage as the workspace resources will be deleted if the budget is exceeded.": "Cet espace de travail a consommé {0}% de son budget. Il est recommandé de surveiller l'utilisation, car les ressources de l'espace de travail seront supprimées si le budget est dépassé."
+}

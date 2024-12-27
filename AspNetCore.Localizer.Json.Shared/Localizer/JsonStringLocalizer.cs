@@ -29,22 +29,27 @@ namespace AspNetCore.Localizer.Json.Localizer
             if (_localizationOptions.Value.LocalizerDiagnosticMode)
                 return ConvertToChar(name, 'X');
 
-            string format = GetString(name);
-            if (format == null)
+            string? value = GetString(name);
+            if (value == null)
+            {
                 return new LocalizedString(name, name, resourceNotFound: true);
+            }
 
-            string value = arguments.Length > 0
-                ? GetPluralLocalization(name, format, arguments)
-                : format;
-
+            value = FormatString(value, arguments);
+       
             return new LocalizedString(name, value, resourceNotFound: false);
         }
 
-        private string GetPluralLocalization(string name, string format, object[] arguments)
+        private string FormatString(string value, object[]? arguments)
         {
-            if (arguments.LastOrDefault() is bool isPlural)
+            // Vérifie si des arguments sont présents et formate la chaîne
+            if (arguments != null && arguments.Length > 0)
             {
-                string value = GetString(name);
+                value = string.Format(value, arguments);
+            }
+
+            if (arguments != null && arguments.LastOrDefault() is bool isPlural)
+            {
                 if (!string.IsNullOrEmpty(value) && value.Contains(_localizationOptions.Value.PluralSeparator))
                 {
                     var parts = value.Split(_localizationOptions.Value.PluralSeparator);
@@ -52,7 +57,7 @@ namespace AspNetCore.Localizer.Json.Localizer
                 }
             }
 
-            return string.Format(format, arguments);
+            return value;
         }
 
         public LocalizedString GetPlural(string name, double count, params object[] arguments)
@@ -130,20 +135,20 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         private readonly Dictionary<string, string> _localStringCache = new();
 
-        private string GetString(string name, bool shouldTryDefaultCulture = true)
+        private string? GetString(string name, bool shouldTryDefaultCulture = true)
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
 
             // Check cache before looking up
-            if (_localStringCache.TryGetValue(name, out string cachedValue))
+            if (_localStringCache.TryGetValue(name, out string? cachedValue))
             {
                 return cachedValue;
             }
 
             var culture = InitCorrectJsonCulture(true);
 
-            if (localization != null && localization.TryGetValue(name, out LocalizatedFormat localizedValue))
+            if (localization != null && localization.TryGetValue(name, out LocalizatedFormat? localizedValue))
             {
                 _localStringCache[name] = localizedValue.Value; // Cache the result
                 return localizedValue.Value;
