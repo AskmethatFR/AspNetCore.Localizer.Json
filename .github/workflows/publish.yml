@@ -19,9 +19,11 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+        working-directory: AspNetCore.Localizer.Json
 
       - name: Build
         run: dotnet build --no-restore -c Release /p:Version=${GITHUB_REF_NAME#refs/tags/}
+        working-directory: AspNetCore.Localizer.Json
 
       - name: Test
         run: dotnet test --verbosity normal
