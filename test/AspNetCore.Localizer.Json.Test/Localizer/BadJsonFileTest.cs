@@ -43,5 +43,15 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             Assert.AreEqual("Name3", result2);
         }
 
+        [TestMethod]
+        public void TestReadName1_RelativePath_NullStringLocation()
+        {
+            InitLocalizer(new CultureInfo("fr-FR"));
+
+            LocalizedString result = localizer.GetString("");
+
+            Assert.AreEqual("", result);
+        }
+
     }
 }

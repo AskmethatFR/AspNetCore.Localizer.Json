@@ -151,7 +151,11 @@ namespace AspNetCore.Localizer.Json.Localizer
         private string? GetString(string name, bool shouldTryDefaultCulture = true)
         {
             if (string.IsNullOrEmpty(name))
-                throw new ArgumentNullException(nameof(name));
+            {
+                Console.Error.WriteLine(
+                $"You are trying to locate an empty string, please verify");
+                return string.Empty;
+            }
 
             // Check cache before looking up
             if (_localStringCache.TryGetValue(name, out string? cachedValue))
