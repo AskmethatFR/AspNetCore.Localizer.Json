@@ -57,7 +57,7 @@ services.AddJsonLocalization(options => {
 - **FileEncoding** : _default value : UTF8_. Specify the file encoding.
 - **Caching** : *_default value: MemoryCache*. Internal caching can be overwritted by using custom class that extends
   IMemoryCache.
-- **PluralSeparator** : *_default value: |*. Seperator used to get singular or pluralized version of localization. More
+ - **PluralSeparator** : *_default value: |*. Separator used to get singular or pluralized version of localization. More
   information in *Pluralization*
 - **MissingTranslationLogBehavior** : *_default value: LogConsoleError*. Define the logging mode
 - **LocalizationMode** : *_default value: Basic*. Define the localization mode for the Json file. Currently Basic and

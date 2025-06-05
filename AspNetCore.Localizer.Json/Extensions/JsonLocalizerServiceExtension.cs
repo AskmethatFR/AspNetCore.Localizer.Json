@@ -44,12 +44,16 @@ namespace AspNetCore.Localizer.Json.Extensions
                 throw new ArgumentNullException(nameof(services));
             }
 
+            _ = services.AddOptions();
+
             if (setupAction == null)
             {
-                Console.Error.WriteLine("Setup Action seems to be null, The localization options will not be override. For any helps create an issue at ");
+                Console.Error.WriteLine(
+                    "Setup Action seems to be null, The localization options will not be override. For any helps create an issue at ");
                 AddJsonLocalizationServices(services);
+                return services;
             }
-            //IWebHostEnvironment serverEnv, IWebAssemblyHostEnvironment clientEnv
+
             AddJsonLocalizationServices(services, setupAction);
 
             return services;
@@ -70,7 +74,7 @@ namespace AspNetCore.Localizer.Json.Extensions
         /// If user want to override default localization options
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the services to</param>
-        /// <param name="setupAction">The <see cref="LocalizationOptions"/> option to change default localization mecanism</param>
+        /// <param name="setupAction">The <see cref="LocalizationOptions"/> option to change default localization mechanism</param>
         internal static void AddJsonLocalizationServices(
             IServiceCollection services,
             Action<JsonLocalizationOptions> setupAction)

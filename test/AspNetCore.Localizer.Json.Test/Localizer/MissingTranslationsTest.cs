@@ -4,11 +4,14 @@ using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using AspNetCore.Localizer.Json.JsonOptions;
 using LocalizedString = Microsoft.Extensions.Localization.LocalizedString;
 using System.IO;
+using System.Text.Json;
+using AspNetCore.Localizer.Json.Extensions;
 
 namespace AspNetCore.Localizer.Json.Test.Localizer
 {
@@ -23,7 +26,8 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
             {
                 DefaultCulture = new CultureInfo("en-AU"),
-                MissingTranslationLogBehavior = Extensions.MissingTranslationLogBehavior.CollectToJSON,
+
+                MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON,
                 SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>()
                 {
                      new CultureInfo("fr"),
@@ -54,6 +58,23 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             var allJsonFiles = Directory.GetFiles($".", "*.json").ToList();
 
             Assert.IsTrue(allJsonFiles.Exists(s => s.Contains(name)));
+            // Ensure the created JSON contains the missing key
+            var jsonContent = File.ReadAllText(actualName);
+            var deserialized = JsonSerializer.Deserialize<Dictionary<string, string>>(jsonContent);
+            Assert.IsNotNull(deserialized);
+            Assert.IsTrue(deserialized.ContainsKey("Colored"));
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            var defaultJsonFile = JsonLocalizationOptions.DEFAULT_MISSING_TRANSLATIONS;
+            var extension = Path.GetExtension(defaultJsonFile);
+            var name = Path.GetFileNameWithoutExtension(defaultJsonFile);
+            var actualName = $"{name}-default{extension}";
+
+            if (File.Exists(actualName))
+                File.Delete(actualName);
         }
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
     public class PluralizationJsonTest
     {
         private JsonStringLocalizer localizer = null;
-        public void InitLocalizer(char seperator = '|')
+        public void InitLocalizer(char separator = '|')
         {
             CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
 
@@ -26,7 +26,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                      new CultureInfo("fr-FR"),
                 },
                 ResourcesPath = "pluralization",
-                PluralSeparator = seperator,
+                PluralSeparator = separator,
                 AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly())
             });
         }
@@ -54,7 +54,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
         }
 
         [TestMethod]
-        public void Should_Be_PluralWithNoSeperator_ShowDefault()
+        public void Should_Be_PluralWithNoSeparator_ShowDefault()
         {
             InitLocalizer();
 
