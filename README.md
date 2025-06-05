@@ -52,6 +52,7 @@ services.AddJsonLocalization(options => {
 - **ResourcesPath** : _Default value : `$"{_env.WebRootPath}/Resources/"`_. Base path of your resources. The plugin will
   browse the folder and sub-folders and load all present JSON files.
 - **AdditionalResourcesPaths** : _Default value : null_. Optionnal array of additional paths to search for resources.
+- **UseEmbeddedResources** : _default value: true_. When set to `false`, JSON files are loaded directly from the file system instead of from embedded resources.
 - **CacheDuration** : _Default value : 30 minutes_. We cache all values to memory to avoid loading files for each
   request, this parameter defines the time after which the cache is refreshed.
 - **FileEncoding** : _default value : UTF8_. Specify the file encoding.

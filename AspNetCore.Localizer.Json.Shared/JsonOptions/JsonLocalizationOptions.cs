@@ -141,5 +141,12 @@ namespace AspNetCore.Localizer.Json.JsonOptions
         /// Additional paths to search for JSON files.
         /// </summary>
         public string[] AdditionalResourcesPaths { get; set; } = Array.Empty<string>();
+
+        /// <summary>
+        /// Determines whether localization files should be loaded from embedded resources.
+        /// Defaults to <c>true</c> to keep the previous behaviour.
+        /// When set to <c>false</c>, files are loaded directly from the file system.
+        /// </summary>
+        public bool UseEmbeddedResources { get; set; } = true;
     }
 }
