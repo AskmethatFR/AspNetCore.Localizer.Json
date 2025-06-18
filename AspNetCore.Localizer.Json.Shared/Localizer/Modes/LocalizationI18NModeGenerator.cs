@@ -79,12 +79,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             try
             {
-                var assembly = options.AssemblyHelper.GetAssembly();
-                using Stream? stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream == null)
-                {
-                    throw new FileNotFoundException($"La ressource incorporée '{resourceName}' est introuvable.");
-                }
+                using Stream stream = options.UseEmbeddedResources
+                    ? options.AssemblyHelper.GetAssembly().GetManifestResourceStream(resourceName)
+                    ?? throw new FileNotFoundException($"La ressource incorporée '{resourceName}' est introuvable.")
+                    : File.OpenRead(resourceName);
 
                 if (stream.CanSeek)
                 {

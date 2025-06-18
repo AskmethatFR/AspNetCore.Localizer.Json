@@ -22,8 +22,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             {
                 try
                 {
-                    var tempLocalization = ReadAndDeserializeEmbeddedResource<string, JsonLocalizationFormat>(
-                        resourceName, options.FileEncoding);
+                    Dictionary<string, JsonLocalizationFormat>? tempLocalization =
+                        options.UseEmbeddedResources
+                            ? ReadAndDeserializeEmbeddedResource<string, JsonLocalizationFormat>(resourceName, options.FileEncoding)
+                            : ReadAndDeserializeFile<string, JsonLocalizationFormat>(resourceName, options.FileEncoding);
 
                     if (tempLocalization == null)
                         continue;
@@ -107,6 +109,12 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             using var reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: false);
             var json = reader.ReadToEnd();
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(json);
+        }
+
+        private static Dictionary<TKey, TValue>? ReadAndDeserializeFile<TKey, TValue>(string filePath, Encoding encoding)
+        {
+            var json = File.ReadAllText(filePath, encoding);
             return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(json);
         }
     }

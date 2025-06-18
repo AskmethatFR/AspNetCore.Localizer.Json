@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.IO;
 using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
@@ -133,24 +134,53 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         private IEnumerable<string> GetJsonFilesPath(CultureInfo culture)
         {
-            var assembly =  _assemblyHelper.GetAssembly();
-            var resourceNames = assembly.GetManifestResourceNames();
-
             var pathToLook = LocalizationOptions.Value.ResourcesPath ?? string.Empty;
             var additionalPath = LocalizationOptions.Value.AdditionalResourcesPaths ?? Array.Empty<string>();
 
-            var cultureSpecificFile = $"{culture.Name}"; 
-            var cultureNeutralFile = $"{culture.TwoLetterISOLanguageName}"; 
+            var cultureSpecificFile = $"{culture.Name}";
+            var cultureNeutralFile = $"{culture.TwoLetterISOLanguageName}";
 
-            var defaultFile = $".json"; 
+            var defaultFile = $".json";
 
-            return resourceNames
-                .Where(name =>
-                    (additionalPath.Any(path => name.Contains($".{path}.", StringComparison.OrdinalIgnoreCase)) ||
-                    name.Contains($".{pathToLook}.", StringComparison.OrdinalIgnoreCase)) &&
-                    WithBaseName(name) &&
-                    IsRelevantCultureFile(name, cultureSpecificFile, cultureNeutralFile, defaultFile, culture))
-                .ToList();
+            if (LocalizationOptions.Value.UseEmbeddedResources)
+            {
+                var assembly = _assemblyHelper.GetAssembly();
+                var resourceNames = assembly.GetManifestResourceNames();
+
+                return resourceNames
+                    .Where(name =>
+                        (additionalPath.Any(path => name.Contains($".{path}.", StringComparison.OrdinalIgnoreCase)) ||
+                        name.Contains($".{pathToLook}.", StringComparison.OrdinalIgnoreCase)) &&
+                        WithBaseName(name) &&
+                        IsRelevantCultureFile(name, cultureSpecificFile, cultureNeutralFile, defaultFile, culture))
+                    .ToList();
+            }
+
+            List<string> files = new();
+            IEnumerable<string> directories = new[] { pathToLook }.Concat(additionalPath)
+                .Where(p => !string.IsNullOrWhiteSpace(p));
+
+            foreach (var dir in directories)
+            {
+                var searchPath = Path.IsPathRooted(dir) ? dir : Path.Combine(AppContext.BaseDirectory, dir);
+                if (!Directory.Exists(searchPath))
+                {
+                    continue;
+                }
+
+                foreach (var file in Directory.GetFiles(searchPath, "*.json", SearchOption.AllDirectories))
+                {
+                    var fileName = Path.GetFileName(file);
+
+                    if (WithBaseName(file) &&
+                        IsRelevantCultureFile(fileName, cultureSpecificFile, cultureNeutralFile, defaultFile, culture))
+                    {
+                        files.Add(file);
+                    }
+                }
+            }
+
+            return files;
         }
         
         
