@@ -21,17 +21,17 @@ jobs:
         run: dotnet restore
         working-directory: AspNetCore.Localizer.Json
 
-      - name: Build
-        run: dotnet build --no-restore -c Release /p:Version=$GITHUB_REF_NAME
+      - name: Build multi-target
+        run: dotnet build -c Release /p:Version=$GITHUB_REF_NAME
         working-directory: AspNetCore.Localizer.Json
 
       - name: Test
         run: dotnet test --verbosity normal
         working-directory: test/AspNetCore.Localizer.Json.Test
 
-      - name: Pack net core
+      - name: Pack multi-target
         run: dotnet pack -o netCore -c Release /p:Version=$GITHUB_REF_NAME
         working-directory: AspNetCore.Localizer.Json
 
-      - name: Push net core to nuget
+      - name: Push package to NuGet
         run: dotnet nuget push netCore/AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
