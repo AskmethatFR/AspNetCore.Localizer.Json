@@ -8,9 +8,7 @@
     <ItemGroup>
         <SupportedPlatform Include="browser"/>
     </ItemGroup>
-
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
         <PackageId>AspNetCore.Localizer.Json</PackageId>
         <PackageVersion>$(Version)</PackageVersion>
         <Authors>Askmethat</Authors>
@@ -29,6 +27,7 @@
         <RepositoryType>Git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
+
 
     <ItemGroup>
         <None Include="..\README.md" Pack="true" PackagePath="\"/>
