@@ -34,4 +34,4 @@ jobs:
         working-directory: AspNetCore.Localizer.Json
 
       - name: Push net core to nuget
-        run: dotnet nuget push netCore/AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push AspNetCore.Localizer.Json/netCore/AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
