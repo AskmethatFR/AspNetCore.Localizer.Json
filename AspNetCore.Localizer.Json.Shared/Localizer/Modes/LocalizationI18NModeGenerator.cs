@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
 using AspNetCore.Localizer.Json.Localizer.Pooling;
@@ -11,6 +12,8 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
     internal partial class LocalizationI18NModeGenerator : LocalizationModeBase, ILocalizationModeGenerator
     {
+        private static readonly Regex CultureNameRegex = new("^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8}){0,2}$", RegexOptions.Compiled);
+
         protected LocalizatedFormat GetLocalizedValue(KeyValuePair<string, string> temp, bool isParent)
         {
             LocalizatedFormat format = LocalizatedFormatPool.Rent();
@@ -26,44 +29,78 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             // Créer un nouveau dictionnaire pour éviter les données résiduelles
             localization = new Dictionary<string, LocalizatedFormat>();
-            
+
             foreach (string resourceName in resourceNames)
             {
                 string cultureName = GetCultureNameFromResource(resourceName);
+                if (!IsRelevantCultureFile(cultureName, currentCulture, options))
+                {
+                    continue;
+                }
+
+                bool isParentForFile = true;
                 if (!string.IsNullOrEmpty(cultureName))
                 {
-                    bool isParent;
                     try
                     {
                         CultureInfo fileCulture = new CultureInfo(cultureName);
-                        isParent = fileCulture.Name.Equals(currentCulture.Parent.Name,
-                                       StringComparison.OrdinalIgnoreCase)
-                                   || fileCulture.IsNeutralCulture;
+                        isParentForFile = fileCulture.Name.Equals(currentCulture.Parent.Name,
+                                           StringComparison.OrdinalIgnoreCase)
+                                       || fileCulture.IsNeutralCulture;
                     }
                     catch
                     {
-                        isParent = true;
+                        isParentForFile = true;
                     }
-
-                    AddValueToLocalization(options, resourceName, isParent);
                 }
+
+                AddValueToLocalization(options, resourceName, isParentForFile);
             }
 
             return localization;
         }
 
+        private static bool IsRelevantCultureFile(string cultureName, CultureInfo currentCulture, JsonLocalizationOptions options)
+        {
+            if (string.IsNullOrEmpty(cultureName))
+            {
+                return true; // Neutral/invariant files are always allowed
+            }
+
+            var allowedCultures = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                currentCulture.Name,
+                currentCulture.TwoLetterISOLanguageName
+            };
+
+            if (currentCulture.Parent != CultureInfo.InvariantCulture)
+            {
+                allowedCultures.Add(currentCulture.Parent.Name);
+            }
+
+            if (options.DefaultCulture != null)
+            {
+                allowedCultures.Add(options.DefaultCulture.Name);
+                allowedCultures.Add(options.DefaultCulture.TwoLetterISOLanguageName);
+
+                if (options.DefaultCulture.Parent != CultureInfo.InvariantCulture)
+                {
+                    allowedCultures.Add(options.DefaultCulture.Parent.Name);
+                }
+            }
+
+            return allowedCultures.Contains(cultureName);
+        }
+
         private static string GetCultureNameFromResource(string resourceName)
         {
-            string resourceFileName = Path.GetFileName(resourceName);
-            ReadOnlySpan<char> resourceSpan = resourceFileName.AsSpan();
-            int lastDotIndex = resourceSpan.LastIndexOf('.');
-            if (lastDotIndex > 0)
+            var fileName = Path.GetFileName(resourceName);
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName) ?? string.Empty;
+            var segments = fileNameWithoutExtension.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+            if (segments.Length > 1 && CultureNameRegex.IsMatch(segments[^1]))
             {
-                int secondLastDotIndex = resourceSpan.Slice(0, lastDotIndex).LastIndexOf('.');
-                if (secondLastDotIndex >= 0)
-                {
-                    return resourceSpan.Slice(secondLastDotIndex + 1, lastDotIndex - secondLastDotIndex - 1).ToString();
-                }
+                return segments[^1];
             }
 
             return string.Empty;

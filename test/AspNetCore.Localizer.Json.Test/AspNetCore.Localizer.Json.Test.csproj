@@ -35,7 +35,11 @@
     <EmbeddedResource Include="fallback\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="encoding\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="interpolation\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18nLeak\**\*.json" WithCulture="false" />
     <Content Include="physical\**\*.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cultureFiltering\**\*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="i18nFallback\**\*.json">

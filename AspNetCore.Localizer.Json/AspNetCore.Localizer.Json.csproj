@@ -3,8 +3,12 @@
     <PropertyGroup>
         <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
-        <Version>1.0.10.0</Version>
-        <InformationalVersion>1.0.10</InformationalVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <DebugType>portable</DebugType>  <!-- Génère les .pdb -->
+        <DebugSymbols>true</DebugSymbols>
+        <Deterministic>false</Deterministic>  <!-- Pour un debug précis -->
     </PropertyGroup>
 
     <ItemGroup>

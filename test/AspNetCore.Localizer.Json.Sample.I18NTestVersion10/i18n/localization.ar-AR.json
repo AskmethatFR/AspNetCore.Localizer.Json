@@ -1,0 +1,19 @@
+{
+  "Home": "الرئيسية",
+  "Counter": "العداد",
+  "FetchData": "جلب البيانات",
+  "Welcome": "مرحبا بك في تطبيقك الجديد",
+  "HelloWorld": "<h1>مرحبا، عالم</h1>",
+  "WeatherForecast": "توقعات الطقس",
+  "WeatherForecastDesc": "هذا المكون يوضح كيفية جلب البيانات من خدمة.",
+  "Loading": "جار التحميل...",
+  "Date": "التاريخ",
+  "Summary": "الملخص",
+  "CurrentCount": "العدد الحالي",
+  "ClickMe": "اضغط علي",
+  "About": "نبذة عنا",
+  "MissingText1": "النص مفقود (1)",
+  "MissingText2": "النص مفقود (2)",
+  "MissingText3-Counter": "النص مفقود (العداد)",
+  "MissingText4-Fetch": "النص مفقود (جلب البيانات)"
+}

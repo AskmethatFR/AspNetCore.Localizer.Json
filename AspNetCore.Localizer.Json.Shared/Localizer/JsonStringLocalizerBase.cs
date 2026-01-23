@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.IO;
+using System.Text.RegularExpressions;
 using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
@@ -15,6 +16,7 @@ namespace AspNetCore.Localizer.Json.Localizer
     {
         private readonly string _baseName;
         private bool _disposed = false;
+        private static readonly Regex CultureNameRegex = new("^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8}){0,2}$", RegexOptions.Compiled);
 
         #region Properties and Constructor
 
@@ -262,28 +264,24 @@ namespace AspNetCore.Localizer.Json.Localizer
             string defaultFile)
         {
 
-            if (resourceName.EndsWith(defaultFile, StringComparison.OrdinalIgnoreCase))
+            if (!resourceName.EndsWith(defaultFile, StringComparison.OrdinalIgnoreCase))
             {
-                var prefix = resourceName.Substring(0, resourceName.LastIndexOf(defaultFile, StringComparison.OrdinalIgnoreCase));
-                var lastSegment = prefix.Split('.').Last();
-
-                var allCultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
-
-                //if the last segment is not a culture, we take the file because if neutral culture is not the same as the parent culture
-                if (!allCultures.Any(c => c.Name.Equals(lastSegment, StringComparison.OrdinalIgnoreCase)))
-                {
-                    return true;
-                }
-
-                bool isInvariantCulture = string.Equals(lastSegment, CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
-
-                if (cultureCandidates.Contains(lastSegment) && !isInvariantCulture)
-                {
-                    return true;
-                }
+                return false;
             }
 
-            return false;
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resourceName) ?? string.Empty;
+            var nameSegments = fileNameWithoutExtension.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+            // No culture suffix in the filename: treat as neutral resource.
+            if (nameSegments.Length == 1 || !CultureNameRegex.IsMatch(nameSegments[^1]))
+            {
+                return true;
+            }
+
+            var cultureSegment = nameSegments[^1];
+            bool isInvariantCulture = string.Equals(cultureSegment, CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
+
+            return cultureCandidates.Contains(cultureSegment) && !isInvariantCulture;
         }
         #endregion
 
