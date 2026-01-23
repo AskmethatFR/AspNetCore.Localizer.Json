@@ -17,12 +17,22 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      - name: Extract version info
+        id: version
+        run: |
+          # Extract tag name (ex: 1.0.2-rc1)
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # Normalize for .NET (replace -rc1 with .0)
+          BUILD_VERSION=${TAG_NAME/-*/}
+          echo "build_version=$BUILD_VERSION.0" >> $GITHUB_OUTPUT
+          echo "nuget_version=$TAG_NAME" >> $GITHUB_OUTPUT
+
       - name: Restore dependencies
         run: dotnet restore
         working-directory: AspNetCore.Localizer.Json
 
       - name: Build
-        run: dotnet build --no-restore -c Release /p:Version=$GITHUB_REF_NAME
+        run: dotnet build --no-restore -c Release /p:Version=${{ steps.version.outputs.build_version }} /p:AssemblyInformationalVersion=${{ steps.version.outputs.nuget_version }}
         working-directory: AspNetCore.Localizer.Json
 
       - name: Test
@@ -30,8 +40,8 @@ jobs:
         working-directory: test/AspNetCore.Localizer.Json.Test
 
       - name: Pack net core
-        run: dotnet pack -o netCore -c Release /p:Version=$GITHUB_REF_NAME
+        run: dotnet pack -o netCore -c Release /p:Version=${{ steps.version.outputs.nuget_version }}
         working-directory: AspNetCore.Localizer.Json
 
       - name: Push net core to nuget
-        run: dotnet nuget push AspNetCore.Localizer.Json/netCore/AspNetCore.Localizer.Json.$GITHUB_REF_NAME.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push AspNetCore.Localizer.Json/netCore/*.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
