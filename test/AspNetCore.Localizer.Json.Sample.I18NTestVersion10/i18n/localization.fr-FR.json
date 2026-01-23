@@ -1,0 +1,19 @@
+{
+  "Home": "Accueil",
+  "Counter": "Compteur",
+  "FetchData": "Recuperer Donnees",
+  "Welcome": "Bienvenue dans notre nouvelle application",
+  "HelloWorld": "<h1>Bonjour, monde</h1>",
+  "WeatherForecast": "Previsions meteorologiques",
+  "WeatherForecastDesc": "Ce volet montre comment obtenir des donnees a partir d'un service.",
+  "Loading": "Chargement...",
+  "Date": "Date",
+  "Summary": "Sommaire",
+  "CurrentCount": "Valeur courante",
+  "ClickMe": "Cliquer",
+  "About": "A propos de",
+  "MissingText1": "Texte manquant (1)",
+  "MissingText2": "Texte manquant (2)",
+  "MissingText3-Counter": "Texte manquant (compteur)",
+  "MissingText4-Fetch": "Texte manquant (donnees)"
+}

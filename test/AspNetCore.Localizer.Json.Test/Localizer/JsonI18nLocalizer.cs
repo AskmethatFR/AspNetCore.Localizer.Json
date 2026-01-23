@@ -66,17 +66,47 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
         {
             CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
 
-            // Arrange           
+            // Arrange
            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(_jsonLocalizationOptions);
 
             var frResult = localizer.GetString("Name");
 
             Assert.AreEqual("Nom",frResult.Value);
-            
+             
             CultureInfo.CurrentUICulture = new CultureInfo("en-US");
             var usResult = localizer.GetString("Name");
 
-            Assert.AreEqual("Nom",frResult.Value);
+            Assert.AreEqual("Name",usResult.Value);
+        }
+
+        [TestMethod]
+        public void I18n_GetNameTranslation_ShouldValidateDynamicCultureChange()
+        {
+            // Test the dynamic culture change behavior with the new Lazy reconstruction
+            CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
+
+            // Arrange
+            JsonStringLocalizer localizer = JsonStringLocalizerHelperFactory.Create(_jsonLocalizationOptions);
+
+            // Act - Get translation for French culture
+            var frResult = localizer.GetString("Name");
+            
+            // Assert - Should return French translation
+            Assert.AreEqual("Nom", frResult.Value);
+            
+            // Act - Change culture to English
+            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
+            var usResult = localizer.GetString("Name");
+            
+            // Assert - Should return English translation (validating Lazy reconstruction)
+            Assert.AreEqual("Name", usResult.Value);
+            
+            // Act - Change back to French
+            CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
+            var frResultAgain = localizer.GetString("Name");
+            
+            // Assert - Should return French translation again
+            Assert.AreEqual("Nom", frResultAgain.Value);
         }
         
         [TestMethod]

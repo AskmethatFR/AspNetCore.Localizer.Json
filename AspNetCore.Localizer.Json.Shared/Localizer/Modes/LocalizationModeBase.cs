@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
+using AspNetCore.Localizer.Json.Localizer.Pooling;
 
 namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
@@ -20,6 +17,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             // Skip if the localized value is null
             if (localizedValue.Value is null)
             {
+                LocalizatedFormatPool.Return(localizedValue);
                 return;
             }
 
@@ -28,7 +26,14 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             {
                 if (existingValue.IsParent && !localizedValue.IsParent)
                 {
+                    // Return the old value to the pool before replacing
+                    LocalizatedFormatPool.Return(existingValue);
                     localization[temp.Key] = localizedValue;
+                }
+                else
+                {
+                    // Return the new value to the pool if not used
+                    LocalizatedFormatPool.Return(localizedValue);
                 }
             }
             else

@@ -1,0 +1,76 @@
+﻿@page "/weather"
+@attribute [StreamRendering]
+
+<PageTitle>@Localizer["FetchData"]</PageTitle>
+
+<h1>@Localizer.GetString("WeatherForecast")</h1>
+
+<p>@Localizer["WeatherForecastDesc"]</p>
+<p>@Localizer["MissingText4-Fetch"]</p>
+
+@if (forecasts == null)
+{
+    <p>
+        <em>@Localizer["Loading"]</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>@Localizer["Date"]</th>
+            <th aria-label="Temperature in Celsius">@Localizer["TempC"]</th>
+            <th aria-label="Temperature in Fahrenheit">@Localizer["TempF"]</th>
+            <th>@Localizer["Summary"]</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var forecast in forecasts)
+        {
+            <tr>
+                <td>@forecast.Date.ToShortDateString()</td>
+                <td>@forecast.TemperatureC</td>
+                <td>@forecast.TemperatureF</td>
+                <td>@forecast.Summary</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private WeatherForecast[]? forecasts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+
+        var startDate = DateOnly.FromDateTime(DateTime.Now);
+        var summaries = new[]
+        {
+            Localizer.GetString("Freezing"),
+            Localizer.GetString("Bracing"),
+            Localizer.GetString("Chilly"),
+            Localizer.GetString("Cool"),
+            Localizer.GetString("Mild"),
+            Localizer.GetString("Warm")
+        };
+        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        {
+            Date = startDate.AddDays(index),
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = summaries[Random.Shared.Next(summaries.Length)]
+        }).ToArray();
+    }
+
+    private class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+
+}

@@ -19,10 +19,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\JsonStringLocalizer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\JsonStringLocalizerBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\ILocalizationModeGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\JsonStreamReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationBasicModeGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationI18NModeGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationModeBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationModeFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\PluralizationConstants.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Localizer\Pooling\LocalizatedFormatPool.cs" />
   </ItemGroup>
+  <Target Name="AspNetCore_Localizer_Json_Shared">
+    <Message Text="AspNetCore_Localizer_Json_Shared target executed successfully" Importance="high" />
+  </Target>
 </Project>

@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
+using AspNetCore.Localizer.Json.Localizer.Pooling;
 
 namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
@@ -14,25 +17,28 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             IEnumerable<string> resourceNames, CultureInfo currentCulture, JsonLocalizationOptions options)
         {
             _options = options;
+            
+            // Créer un nouveau dictionnaire pour éviter les données résiduelles
+            localization = new Dictionary<string, LocalizatedFormat>();
 
-            var parentCultureName = currentCulture.Parent.Name;
-            var defaultCultureName = _options.DefaultCulture?.Name;
+            string parentCultureName = currentCulture.Parent.Name;
+            string defaultCultureName = _options.DefaultCulture?.Name;
 
-            foreach (var resourceName in resourceNames)
+            foreach (string resourceName in resourceNames)
             {
                 try
                 {
                     Dictionary<string, JsonLocalizationFormat>? tempLocalization =
                         options.UseEmbeddedResources
-                            ? ReadAndDeserializeEmbeddedResource<string, JsonLocalizationFormat>(resourceName, options.FileEncoding)
-                            : ReadAndDeserializeFile<string, JsonLocalizationFormat>(resourceName, options.FileEncoding);
+                            ? ReadAndDeserializeEmbeddedResourceStreaming<string, JsonLocalizationFormat>(resourceName, options.FileEncoding)
+                            : ReadAndDeserializeFileStreaming<string, JsonLocalizationFormat>(resourceName, options.FileEncoding);
 
                     if (tempLocalization == null)
                         continue;
 
-                    foreach (var temp in tempLocalization)
+                    foreach (KeyValuePair<string, JsonLocalizationFormat> temp in tempLocalization)
                     {
-                        var localizedValue = GetLocalizedValue(currentCulture, parentCultureName, defaultCultureName, temp);
+                        LocalizatedFormat localizedValue = GetLocalizedValue(currentCulture, parentCultureName, defaultCultureName, temp);
                         AddOrUpdateLocalizedValue(localizedValue, temp);
                     }
                 }
@@ -52,70 +58,71 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             string? defaultCultureName,
             KeyValuePair<string, JsonLocalizationFormat> temp)
         {
-            var localizationFormat = temp.Value;
+            JsonLocalizationFormat localizationFormat = temp.Value;
 
-            if (localizationFormat.Values.TryGetValue(currentCulture.Name, out var value))
+            if (localizationFormat.Values.TryGetValue(currentCulture.Name, out string value))
             {
-                return new LocalizatedFormat
-                {
-                    IsParent = false,
-                    Value = value
-                };
+                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                format.IsParent = false;
+                format.Value = value;
+                return format;
             }
 
             if (localizationFormat.Values.TryGetValue(parentCultureName, out value))
             {
-                return new LocalizatedFormat
-                {
-                    IsParent = true,
-                    Value = value
-                };
+                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                format.IsParent = true;
+                format.Value = value;
+                return format;
             }
 
             if (localizationFormat.Values.TryGetValue(string.Empty, out value))
             {
-                return new LocalizatedFormat
-                {
-                    IsParent = true,
-                    Value = value
-                };
+                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                format.IsParent = true;
+                format.Value = value;
+                return format;
             }
 
             if (defaultCultureName != null && localizationFormat.Values.TryGetValue(defaultCultureName, out value))
             {
-                return new LocalizatedFormat
-                {
-                    IsParent = true,
-                    Value = value
-                };
+                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                format.IsParent = true;
+                format.Value = value;
+                return format;
             }
 
-            return new LocalizatedFormat
-            {
-                IsParent = false,
-                Value = null
-            };
+            LocalizatedFormat nullFormat = LocalizatedFormatPool.Rent();
+            nullFormat.IsParent = false;
+            nullFormat.Value = null;
+            return nullFormat;
         }
 
-        private Dictionary<TKey, TValue>? ReadAndDeserializeEmbeddedResource<TKey, TValue>(string resourceName, Encoding encoding)
+        /// <summary>
+        /// Reads and deserializes an embedded resource using streaming to minimize memory allocations.
+        /// </summary>
+        private Dictionary<TKey, TValue>? ReadAndDeserializeEmbeddedResourceStreaming<TKey, TValue>(string resourceName, Encoding encoding)
         {
-            var assembly = _options.AssemblyHelper.GetAssembly();
+            Assembly assembly = _options.AssemblyHelper.GetAssembly();
 
-            using var stream = assembly.GetManifestResourceStream(resourceName);
+            using Stream stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
             {
                 throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
             }
 
-            using var reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: false);
-            var json = reader.ReadToEnd();
-            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(json);
+            ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, encoding);
+            return JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(jsonData.AsSpan());
         }
 
-        private static Dictionary<TKey, TValue>? ReadAndDeserializeFile<TKey, TValue>(string filePath, Encoding encoding)
+        /// <summary>
+        /// Reads and deserializes a file using streaming to minimize memory allocations.
+        /// </summary>
+        private static Dictionary<TKey, TValue>? ReadAndDeserializeFileStreaming<TKey, TValue>(string filePath, Encoding encoding)
         {
-            var json = File.ReadAllText(filePath, encoding);
-            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(json);
+            using FileStream stream = File.OpenRead(filePath);
+            ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, encoding);
+            return JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(jsonData.AsSpan());
         }
     }
 }

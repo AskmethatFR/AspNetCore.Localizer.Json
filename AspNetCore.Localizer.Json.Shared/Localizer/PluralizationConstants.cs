@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AspNetCore.Localizer.Json.Localizer
+﻿namespace AspNetCore.Localizer.Json.Localizer
 {
     /// <summary>
     /// Default pluralization constants as defined in http://unicode.org/reports/tr35/tr35-numbers.html#Language_Plural_Rules

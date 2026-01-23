@@ -40,7 +40,7 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
             services.AddControllers();
             services.AddServerSideBlazor();
             services.AddScoped<WeatherForecastService>();
-            
+
             var jsonLocalizationOptions = Configuration.GetSection(nameof(JsonLocalizationOptions));
 
             _jsonLocalizationOptions = jsonLocalizationOptions.Get<JsonLocalizationOptions>();
@@ -55,12 +55,15 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 options.CacheDuration = _jsonLocalizationOptions.CacheDuration;
                 options.SupportedCultureInfos = _jsonLocalizationOptions.SupportedCultureInfos;
                 options.FileEncoding = _jsonLocalizationOptions.FileEncoding;
-                options.MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON;
                 options.LocalizationMode = LocalizationMode.I18n;
                 options.LocalizerDiagnosticMode = _jsonLocalizationOptions.LocalizerDiagnosticMode;
-                options.AssemblyHelper = new AssemblyHelper(Assembly.GetExecutingAssembly());
+                options.MaxMissingTranslations = _jsonLocalizationOptions.MaxMissingTranslations;
+                options.MissingTranslationRetention = _jsonLocalizationOptions.MissingTranslationRetention;
+                options.MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON;
+                // options.AssemblyHelper = new AssemblyHelper(Assembly.GetExecutingAssembly());
+                options.UseEmbeddedResources = false;
             });
-            
+
             services.Configure<RequestLocalizationOptions>(options =>
             {
                 options.DefaultRequestCulture = _defaultRequestCulture;
@@ -69,7 +72,7 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 // UI strings that we have localized.
                 options.SupportedUICultures = _supportedCultures;
             });
-            
+
             services.AddHttpContextAccessor();
         }
 
@@ -86,11 +89,11 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-            
-                        
+
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            
+
             app.UseRequestLocalization(new RequestLocalizationOptions
             {
                 DefaultRequestCulture = _defaultRequestCulture,
@@ -99,7 +102,7 @@ namespace AspNetCore.Localizer.Json.Sample.I18nTest
                 // UI strings that we have localized.
                 SupportedUICultures = _supportedCultures
             });
-            
+
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>

@@ -16,18 +16,47 @@ namespace AspNetCore.Localizer.Json.Localizer
 {
     internal partial class JsonStringLocalizer : JsonStringLocalizerBase, IJsonStringLocalizer
     {
-        private readonly Dictionary<string, IDictionary<string, string>> _missingJsonValues = new();
-        private readonly string _missingTranslations = null;
+        private readonly string? _missingTranslationsFile = null;
+        private readonly Dictionary<string, Dictionary<string, string>> _missingTranslations = new();
+        private bool _disposed = false;
+        private const int MaxMissingTranslationsPerCulture = 1000;
 
         public JsonStringLocalizer(IOptions<JsonLocalizationOptions> localizationOptions) : base(localizationOptions)
         {
-            _missingTranslations = localizationOptions.Value.MissingTranslationsOutputFile;
+            _missingTranslationsFile = localizationOptions.Value.MissingTranslationsOutputFile;
         }
 
         public JsonStringLocalizer(IOptions<JsonLocalizationOptions> localizationOptions, string baseName) : base(
             localizationOptions, baseName)
         {
-            _missingTranslations = localizationOptions.Value.MissingTranslationsOutputFile;
+            _missingTranslationsFile = localizationOptions.Value.MissingTranslationsOutputFile;
+        }
+
+        public void Reset()
+        {
+            // Reset any state that needs to be cleared when returning to the pool
+            _missingTranslations.Clear();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources
+                    _missingTranslations.Clear();
+                }
+                _disposed = true;
+            }
+
+            base.Dispose(disposing);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         private static LocalizedString ConvertToChar(string value, char c, int additionalRepeats = 0) =>
@@ -84,13 +113,13 @@ namespace AspNetCore.Localizer.Json.Localizer
 
             string nameWithRule = $"{name}.{applicableRule}";
 
-            if (Localization != null && Localization.TryGetValue(nameWithRule, out var localizedValue))
+            if (_lazyLocalization.Value.TryGetValue(nameWithRule, out var localizedValue))
             {
                 return FormatLocalizedString(name, localizedValue.Value, count, arguments);
             }
 
             string nameWithOtherRule = $"{name}.{PluralizationConstants.Other}";
-            if (Localization != null && Localization.TryGetValue(nameWithOtherRule, out var localizedOtherValue))
+            if (_lazyLocalization.Value.TryGetValue(nameWithOtherRule, out var localizedOtherValue))
             {
                 return FormatLocalizedString(name, localizedOtherValue.Value, count, arguments);
             }
@@ -118,7 +147,7 @@ namespace AspNetCore.Localizer.Json.Localizer
         private CultureInfo InitCorrectJsonCulture(bool shouldTryDefaultCulture = false)
         {
             // Initialize the culture if needed
-            var culture = CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.CurrentUICulture;
+            var culture = CultureInfo.CurrentUICulture ?? CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.InvariantCulture;
             if (!IsUiCultureCurrentCulture(culture))
             {
                 InitJsonFromCulture(culture);
@@ -131,7 +160,7 @@ namespace AspNetCore.Localizer.Json.Localizer
         {
             InitCorrectJsonCulture();
 
-            return Localization?.Where(w => includeParentCultures || !w.Value.IsParent)
+            return _lazyLocalization.Value.Where(w => includeParentCultures || !w.Value.IsParent)
                 .Select(l =>
                     new LocalizedString(l.Key, l.Value.Value ?? l.Key, resourceNotFound: l.Value.Value == null))
                 .OrderBy(s => s.Name);
@@ -146,8 +175,6 @@ namespace AspNetCore.Localizer.Json.Localizer
             return new JsonStringLocalizer(LocalizationOptions);
         }
 
-        private readonly Dictionary<string, string> _localStringCache = new();
-
         private string? GetString(string name, bool shouldTryDefaultCulture = true)
         {
             if (string.IsNullOrEmpty(name))
@@ -157,17 +184,11 @@ namespace AspNetCore.Localizer.Json.Localizer
                 return string.Empty;
             }
 
-            // Check cache before looking up
-            if (_localStringCache.TryGetValue(name, out string? cachedValue))
-            {
-                return cachedValue;
-            }
-
+            // Initialize culture BEFORE lookup to ensure culture-aware access
             var culture = InitCorrectJsonCulture(true);
 
-            if (Localization != null && Localization.TryGetValue(name, out LocalizatedFormat? localizedValue))
+            if (_lazyLocalization.Value.TryGetValue(name, out LocalizatedFormat? localizedValue))
             {
-                _localStringCache[name] = localizedValue.Value;
                 return localizedValue.Value;
             }
 
@@ -179,33 +200,6 @@ namespace AspNetCore.Localizer.Json.Localizer
 
             HandleMissingTranslation(name, culture);
             return null;
-        }
-
-
-        private void HandleMissingTranslation(string name, CultureInfo? culture)
-        {
-            var cultureName = culture?.TwoLetterISOLanguageName ?? "default";
-
-            if (LocalizationOptions.Value.MissingTranslationLogBehavior ==
-                MissingTranslationLogBehavior.LogConsoleError)
-            {
-                Console.Error.WriteLine($"'{name}' does not contain any translation for {cultureName}");
-            }
-
-            if (LocalizationOptions.Value.MissingTranslationLogBehavior == MissingTranslationLogBehavior.CollectToJSON)
-            {
-                if (!_missingJsonValues.TryGetValue(cultureName, out var localeMissingValues))
-                {
-                    localeMissingValues = new Dictionary<string, string>();
-                    _missingJsonValues.TryAdd(cultureName, localeMissingValues);
-                }
-
-                if (localeMissingValues.TryAdd(name, name))
-                {
-                    Console.Error.WriteLine($"'{name}' added to missing values");
-                    WriteMissingTranslations();
-                }
-            }
         }
 
         public MarkupString GetHtmlBlazorString(string name, bool shouldTryDefaultCulture = true) =>
@@ -236,37 +230,60 @@ namespace AspNetCore.Localizer.Json.Localizer
                 InitJsonFromCulture(cultureInfo);
         }
 
-        private void WriteMissingTranslations()
+        private void HandleMissingTranslation(string name, CultureInfo culture)
         {
-            if (string.IsNullOrWhiteSpace(_missingTranslations) || _missingJsonValues.Count == 0)
-                return;
-
-            try
+            if (LocalizationOptions.Value.MissingTranslationLogBehavior == MissingTranslationLogBehavior.LogConsoleError)
             {
-                lock (_missingJsonValues)
-                {
-                    foreach (var locale in _missingJsonValues)
-                    {
-                        if (locale.Value.Count == 0)
-                        {
-                            continue;
-                        }
-
-                        var json = JsonSerializer.Serialize(locale.Value);
-                        var newFile = Path.ChangeExtension(
-                            $"{Path.GetFileNameWithoutExtension(_missingTranslations)}-{locale.Key}",
-                            Path.GetExtension(_missingTranslations)
-                        );
-
-                        File.WriteAllText(newFile, json);
-                        Console.Error.WriteLine(
-                            $"Writing {locale.Value.Count} missing translations to {Path.GetFullPath(newFile)}");
-                    }
-                }
+                Console.Error.WriteLine($"Missing translation: '{name}' for culture '{culture.Name}'");
             }
-            catch (Exception ex)
+            else if (LocalizationOptions.Value.MissingTranslationLogBehavior == MissingTranslationLogBehavior.CollectToJSON)
             {
-                Console.Error.WriteLine($"Cannot write missing translations to {_missingTranslations}: {ex.Message}");
+                WriteMissingTranslations(name, culture);
+            }
+        }
+
+        private void WriteMissingTranslations(string name, CultureInfo culture)
+        {
+            var cultureName = culture?.Name ?? "default";
+
+            if (!_missingTranslations.ContainsKey(cultureName))
+            {
+                _missingTranslations[cultureName] = new Dictionary<string, string>();
+            }
+
+            _missingTranslations[cultureName][name] = name;
+
+            // Limiter la taille du cache des traductions manquantes
+            if (_missingTranslations[cultureName].Count > MaxMissingTranslationsPerCulture)
+            {
+                var keysToRemove = _missingTranslations[cultureName].Keys
+                    .Take(_missingTranslations[cultureName].Count - MaxMissingTranslationsPerCulture)
+                    .ToList();
+
+                foreach (var key in keysToRemove)
+                {
+                    _missingTranslations[cultureName].Remove(key);
+                }
+
+                Console.Error.WriteLine($"[MEMORY_DEBUG] Trimmed missing translations for {cultureName} to {MaxMissingTranslationsPerCulture} entries");
+            }
+
+            // Write to file
+            if (!string.IsNullOrEmpty(_missingTranslationsFile))
+            {
+                var extension = Path.GetExtension(_missingTranslationsFile);
+                var nameWithoutExtension = Path.GetFileNameWithoutExtension(_missingTranslationsFile);
+                var fileNameWithCulture = $"{nameWithoutExtension}-{cultureName}{extension}";
+
+                try
+                {
+                    var json = JsonSerializer.Serialize(_missingTranslations[cultureName], new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(fileNameWithCulture, json);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error writing missing translations to file: {ex.Message}");
+                }
             }
         }
     }

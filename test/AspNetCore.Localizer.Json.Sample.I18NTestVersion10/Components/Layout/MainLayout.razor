@@ -1,0 +1,52 @@
+﻿@inherits LayoutComponentBase
+@using System.Globalization
+@inject NavigationManager Navigation
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu/>
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <select @onchange="CultureChanged">
+                <option value="en-US">Default</option>
+                <option value="en-US">English</option>
+                <option value="fr-FR">Francais</option>
+            </select>
+
+            @(CultureInfo.DefaultThreadCurrentUICulture?.DisplayName ?? CultureInfo.CurrentUICulture.DisplayName)
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">@Localizer["About"]</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private string _selectedLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+    private void CultureChanged(ChangeEventArgs arg)
+    {
+        _selectedLanguage = arg.Value?.ToString() ?? _selectedLanguage;
+        var currentUiCulture = CultureInfo.DefaultThreadCurrentUICulture ?? CultureInfo.CurrentUICulture;
+        if (currentUiCulture.ThreeLetterISOLanguageName != _selectedLanguage)
+        {
+            var selectedCulture = CultureInfo.GetCultureInfo(_selectedLanguage);
+            var uri = new Uri(Navigation.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var cultureEscaped = Uri.EscapeDataString(selectedCulture.Name);
+            var uriEscaped = Uri.EscapeDataString(uri);
+
+            var url = "language/set?culture=" + cultureEscaped + "&fallbackUrl=" + uriEscaped;
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+    }
+}
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

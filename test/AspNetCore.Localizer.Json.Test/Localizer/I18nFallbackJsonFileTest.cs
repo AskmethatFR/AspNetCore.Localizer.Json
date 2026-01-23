@@ -16,7 +16,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
     public class I18nFallbackJsonFileTest
     {
         private JsonStringLocalizer localizer = null;
-        public void InitLocalizer(string cultureString)
+        public void InitLocalizer(string cultureString, bool useEmbeddedResources = true, string resourcesPath = "i18nFallback")
         {
             SetCurrentCulture(cultureString);
 
@@ -30,8 +30,9 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                      new CultureInfo("zh-CN"),
                      new CultureInfo("en-AU")
                 },
-                ResourcesPath = $"i18nFallback",
+                ResourcesPath = resourcesPath,
                 LocalizationMode = LocalizationMode.I18n,
+                UseEmbeddedResources = useEmbeddedResources,
                 AssemblyHelper = new AssemblyStub(Assembly.GetCallingAssembly())
 
             });
@@ -91,6 +92,20 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             Assert.AreEqual("Luminosity", result);
             Assert.IsFalse(result.ResourceNotFound);
 
+        }
+
+        [TestMethod]
+        public void Should_Read_ParentFallback_FromPhysicalFiles()
+        {
+            InitLocalizer("fr-FR", useEmbeddedResources: false, resourcesPath: "i18nFallback");
+
+            LocalizedString color = localizer.GetString("Color");
+            Assert.AreEqual("Couleur (neutre)", color);
+            Assert.IsFalse(color.ResourceNotFound);
+
+            LocalizedString luminosity = localizer.GetString("Luminosity");
+            Assert.AreEqual("Luminosité", luminosity);
+            Assert.IsFalse(luminosity.ResourceNotFound);
         }
 
         //[TestMethod]

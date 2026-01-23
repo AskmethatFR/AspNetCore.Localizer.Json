@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
+using AspNetCore.Localizer.Json.Localizer.Pooling;
 
 namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
@@ -15,11 +13,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
     {
         protected LocalizatedFormat GetLocalizedValue(KeyValuePair<string, string> temp, bool isParent)
         {
-            return new LocalizatedFormat()
-            {
-                IsParent = isParent,
-                Value = temp.Value
-            };
+            LocalizatedFormat format = LocalizatedFormatPool.Rent();
+            format.IsParent = isParent;
+            format.Value = temp.Value;
+            return format;
         }
 
         public Dictionary<string, LocalizatedFormat> ConstructLocalization(
@@ -27,7 +24,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             CultureInfo currentCulture,
             JsonLocalizationOptions options)
         {
-            foreach (var resourceName in resourceNames)
+            // Créer un nouveau dictionnaire pour éviter les données résiduelles
+            localization = new Dictionary<string, LocalizatedFormat>();
+            
+            foreach (string resourceName in resourceNames)
             {
                 string cultureName = GetCultureNameFromResource(resourceName);
                 if (!string.IsNullOrEmpty(cultureName))
@@ -35,7 +35,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     bool isParent;
                     try
                     {
-                        var fileCulture = new CultureInfo(cultureName);
+                        CultureInfo fileCulture = new CultureInfo(cultureName);
                         isParent = fileCulture.Name.Equals(currentCulture.Parent.Name,
                                        StringComparison.OrdinalIgnoreCase)
                                    || fileCulture.IsNeutralCulture;
@@ -54,7 +54,8 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
         private static string GetCultureNameFromResource(string resourceName)
         {
-            ReadOnlySpan<char> resourceSpan = resourceName.AsSpan();
+            string resourceFileName = Path.GetFileName(resourceName);
+            ReadOnlySpan<char> resourceSpan = resourceFileName.AsSpan();
             int lastDotIndex = resourceSpan.LastIndexOf('.');
             if (lastDotIndex > 0)
             {
@@ -68,13 +69,6 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return string.Empty;
         }
 
-
-        private static readonly JsonDocumentOptions JsonOptions = new JsonDocumentOptions()
-        {
-            CommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true
-        };
-
         private void AddValueToLocalization(JsonLocalizationOptions options, string resourceName, bool isParent)
         {
             try
@@ -84,35 +78,15 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     ?? throw new FileNotFoundException($"La ressource incorporée '{resourceName}' est introuvable.")
                     : File.OpenRead(resourceName);
 
-                if (stream.CanSeek)
-                {
-                    Span<byte> bom = stackalloc byte[3];
-                    stream.ReadExactly(bom);
-                    if (!bom.SequenceEqual(new byte[] { 0xEF, 0xBB, 0xBF }))
-                    {
-                        stream.Seek(0, SeekOrigin.Begin);
-                    }
-                }
+                ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, options.FileEncoding);
 
-                byte[] buffer = new byte[8192]; 
-                int bytesRead;
-
-                var readerOptions = new JsonReaderOptions
+                JsonReaderOptions readerOptions = new JsonReaderOptions
                 {
                     AllowTrailingCommas = true,
                     CommentHandling = JsonCommentHandling.Skip
                 };
 
-                using MemoryStream memoryStream = new MemoryStream();
-
-                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    memoryStream.Write(buffer, 0, bytesRead);
-                }
-
-                ReadOnlySpan<byte> jsonData = new ReadOnlySpan<byte>(memoryStream.ToArray());
-
-                var jsonReader = new Utf8JsonReader(jsonData, readerOptions);
+                Utf8JsonReader jsonReader = new Utf8JsonReader(jsonData, readerOptions);
 
                 while (jsonReader.Read())
                 {
@@ -138,9 +112,16 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 switch (jsonReader.TokenType)
                 {
                     case JsonTokenType.PropertyName:
-                        currentProperty = string.IsNullOrEmpty(baseKey)
-                            ? jsonReader.GetString()
-                            : $"{baseKey}.{jsonReader.GetString()}";
+                        string propertyName = jsonReader.GetString();
+
+                        if (string.IsNullOrEmpty(baseKey))
+                        {
+                            currentProperty = propertyName;
+                        }
+                        else
+                        {
+                            currentProperty = string.Concat(baseKey, ".", propertyName);
+                        }
                         break;
 
                     case JsonTokenType.String:

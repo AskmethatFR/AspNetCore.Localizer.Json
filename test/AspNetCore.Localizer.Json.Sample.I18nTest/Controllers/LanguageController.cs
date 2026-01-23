@@ -20,15 +20,18 @@ public class LanguageController : ControllerBase
     public IActionResult Set(string culture, string fallbackUrl)
     {
         var newCulture = CultureInfo.GetCultureInfo(culture);
-        
+        //change current thread culture
+        CultureInfo.CurrentUICulture = newCulture;
+        CultureInfo.CurrentCulture = newCulture;
+
         _httpContextAccessor.HttpContext.Response.Cookies.Append(
             CookieRequestCultureProvider.DefaultCookieName,
             CookieRequestCultureProvider.MakeCookieValue(
                 new RequestCulture(
                     culture: newCulture,
                     uiCulture: newCulture)));
-        
+
         return LocalRedirect(fallbackUrl);
     }
-    
+
 }

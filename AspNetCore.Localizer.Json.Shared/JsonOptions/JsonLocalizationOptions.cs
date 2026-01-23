@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
 using System.Text;
 using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Extensions;
@@ -148,5 +147,25 @@ namespace AspNetCore.Localizer.Json.JsonOptions
         /// When set to <c>false</c>, files are loaded directly from the file system.
         /// </summary>
         public bool UseEmbeddedResources { get; set; } = true;
+
+        /// <summary>
+        /// Maximum number of entries in the serialized memory cache for distributed caching.
+        /// When exceeded, least recently used entries are evicted.
+        /// Default: 1000 entries
+        /// </summary>
+        public int CacheMaxSize { get; set; } = 1000;
+
+        /// <summary>
+        /// Maximum number of missing translations to collect before cleanup.
+        /// When exceeded, oldest entries are removed based on retention period.
+        /// Default: 10000 entries
+        /// </summary>
+        public int MaxMissingTranslations { get; set; } = 10000;
+
+        /// <summary>
+        /// Retention period for missing translation entries before cleanup.
+        /// Default: 24 hours
+        /// </summary>
+        public TimeSpan MissingTranslationRetention { get; set; } = TimeSpan.FromHours(24);
     }
 }

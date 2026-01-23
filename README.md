@@ -10,15 +10,12 @@ Json Localizer library for .NetCore Asp.net projects
 
 [![.NET](https://github.com/AskmethatFR/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml/badge.svg)](https://github.com/AskmethatFR/AspNetCore.Localizer.Json/actions/workflows/dotnet.yml)
 
-# IMPORTANT
-
-From version 1.0.0, the library use only EmbeddedResource to load the files.
-
 # Project
 
 This library allows users to use JSON files instead of RESX in an ASP.NET application.
+It supports both **embedded resources** and **physical files** (choose via `UseEmbeddedResources`).
 The code tries to be most compliant with Microsoft guidelines.
-The library is compatible with NetCore.
+The library is compatible with .NET 8/9/10.
 
 # Configuration
 
@@ -45,46 +42,44 @@ services.AddJsonLocalization(options => {
     });
 ```
 
-### Current Options
+### Current Options (key ones)
 
-- **SupportedCultureInfos** : _Default value : _List containing only default culture_ and CurrentUICulture. Optionnal
-  array of cultures that you should provide to plugin. _(Like RequestLocalizationOptions)
-- **ResourcesPath** : _Default value : `$"{_env.WebRootPath}/Resources/"`_. Base path of your resources. The plugin will
-  browse the folder and sub-folders and load all present JSON files.
-- **AdditionalResourcesPaths** : _Default value : null_. Optionnal array of additional paths to search for resources.
-- **UseEmbeddedResources** : _default value: true_. When set to `false`, JSON files are loaded directly from the file system instead of from embedded resources.
-- **CacheDuration** : _Default value : 30 minutes_. We cache all values to memory to avoid loading files for each
-  request, this parameter defines the time after which the cache is refreshed.
-- **FileEncoding** : _default value : UTF8_. Specify the file encoding.
-- **Caching** : *_default value: MemoryCache*. Internal caching can be overwritted by using custom class that extends
-  IMemoryCache.
-- **PluralSeparator** : *_default value: |*. Seperator used to get singular or pluralized version of localization. More
-  information in *Pluralization*
-- **MissingTranslationLogBehavior** : *_default value: LogConsoleError*. Define the logging mode
-- **LocalizationMode** : *_default value: Basic*. Define the localization mode for the Json file. Currently Basic and
-  I18n. More information in *LocalizationMode*
-- **MissingTranslationsOutputFile** : This enables to specify in which file the missing translations will be written
-  when `MissingTranslationLogBehavior = MissingTranslationLogBehavior.CollectToJSON`, defaults to
-  `MissingTranslations-<locale>.json`
-- **IgnoreJsonErrors**: This properly will ignore the JSON errors if set to true. Recommended in production but not in
-  development.
-- **LocalizerDiagnosticMode**: When set to true, the localizer will replace all localized with "X". This is designed to
-  identify text that is _not using the localizer_ on the page.
-- **AssemblyHelper**: This is used to load the resources from a specific assembly. If not set, the plugin will use the
-  entry assembly.
+- **SupportedCultureInfos** : cultures list (like RequestLocalizationOptions).  
+- **ResourcesPath** : base path of resources. For physical files, set a folder (e.g. `i18n`) and ensure files are copied to output.  
+- **AdditionalResourcesPaths** : extra folders (e.g. `common_i18n`).  
+- **UseEmbeddedResources** : default `true`. Set `false` to load JSON from disk.  
+- **CacheDuration** : memory cache duration (default 30 minutes).  
+- **CacheMaxSize** : max entries in serialized cache (LRU eviction).  
+- **MaxMissingTranslations / MissingTranslationRetention** : bounds + TTL for collected missing translations.  
+- **FileEncoding** : default UTF-8.  
+- **LocalizationMode** : `Basic` or `I18n`.  
+- **PluralSeparator** : default `|`.  
+- **MissingTranslationLogBehavior** : default `LogConsoleError` (or `CollectToJSON`).  
+- **MissingTranslationsOutputFile** : target filename when collecting missing translations.  
+- **IgnoreJsonErrors** : ignore JSON errors (recommended in production).  
+- **LocalizerDiagnosticMode** : replace localized text with `X` to spot missing localizations.  
+- **AssemblyHelper** : select assembly for embedded resources.
 
-### Assemblies
+### Embedded vs Files
 
-To be able to load culture files from an assembly, you should use set WithCulture="false" in csproj file.
-
-``` xml
-<ItemGroup>
-        <EmbeddedResource Include="Resources\localization.json" WithCulture="false">
-        </EmbeddedResource>
-        <EmbeddedResource Include="i18n\*.json" WithCulture="false">
-        </EmbeddedResource>
-    </ItemGroup>
-```
+- **Embedded**: use `WithCulture="false"` to avoid satellite assemblies and keep resources discoverable.  
+  ```xml
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\localization.json" WithCulture="false" />
+    <EmbeddedResource Include="i18n\*.json" WithCulture="false" />
+  </ItemGroup>
+  ```
+- **Files (UseEmbeddedResources = false)**: JSON files must be copied to the output folder.  
+  ```xml
+  <ItemGroup>
+    <Content Update="i18n\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="common_i18n\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  ```
 
 ### Pluralization
 
@@ -139,10 +134,10 @@ from **IJsonStringLocalizer** this method
 
 | Platform      | Version |
 |---------------|:-------:|
-| NetCore       | 9.0.0+  |
-| Blazor Server | 9.0.0+  |
-| Blazor Wasm   | 9.0.0+  |
-| Blazor MAUI   | 9.0.0+  |
+| NetCore       | 8.0.0+  |
+| Blazor Server | 8.0.0+  |
+| Blazor Wasm   | 8.0.0+  |
+| Blazor MAUI   | 8.0.0+  |
 
 # Localization mode
 
@@ -171,27 +166,34 @@ Please use this pattern : **[fileName].[culture].json**
 If you need a fallback culture that target all culture, you can create a file named  **localisation.json**. Of course,
 if this file does not exist, the chosen default culture is the fallback.
 
-# Performances
+Parent fallback: for `fr-FR`, both `fr-FR` and `fr` files are considered (when present) before the default fallback.
 
-After talking with others Devs about my package, they asked my about performance.
+# Performances (latest)
 
 ``` ini
-BenchmarkDotNet v0.14.0, EndeavourOS
-AMD Ryzen 9 7950X3D, 1 CPU, 32 logical and 16 physical cores
-.NET SDK 9.0.100
-  [Host]     : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-  DefaultJob : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+BenchmarkDotNet v0.15.8, Linux CachyOS
+AMD Ryzen 9 7950X3D 2.99GHz, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 10.0.100
+  [Host]     : .NET 10.0.0 (10.0.0, 42.42.42.42424), X64 RyuJIT x86-64-v4
+  DefaultJob : .NET 10.0.0 (10.0.0, 42.42.42.42424), X64 RyuJIT x86-64-v4
 ```
 
-| Method                                          |          Mean |        Error |       StdDev |           Min |           Max |    Ratio | RatioSD |   Gen0 |   Gen1 | Allocated | Alloc Ratio |
-|-------------------------------------------------|--------------:|-------------:|-------------:|--------------:|--------------:|---------:|--------:|-------:|-------:|----------:|------------:|
-| Localizer                                       |      31.83 ns |     0.140 ns |     0.117 ns |      31.62 ns |      32.00 ns |     1.00 |    0.01 |      - |      - |         - |          NA |
-| JsonLocalizer                                   |      11.70 ns |     0.030 ns |     0.027 ns |      11.67 ns |      11.75 ns |     0.37 |    0.00 |      - |      - |         - |          NA |
-| JsonLocalizerWithCreation                       | 140,762.12 ns | 2,813.586 ns | 5,810.543 ns | 126,991.04 ns | 150,169.03 ns | 4,422.62 |  181.61 | 3.9063 | 3.4180 |  203362 B |          NA |
-| I18nJsonLocalizerWithCreation                   |  87,809.74 ns |   285.333 ns |   238.266 ns |  87,211.17 ns |  88,223.01 ns | 2,758.90 |   12.16 | 9.7656 | 9.5215 |  166091 B |          NA |
-| JsonLocalizerWithCreationAndExternalMemoryCache |   4,411.59 ns |    63.052 ns |    58.979 ns |   4,301.21 ns |   4,500.86 ns |   138.61 |    1.86 | 0.1373 | 0.1297 |    7144 B |          NA |
-| JsonLocalizerDefaultCultureValue                |      76.77 ns |     1.097 ns |     0.857 ns |      74.63 ns |      77.90 ns |     2.41 |    0.03 | 0.0129 |      - |     216 B |          NA |
-| MicrosoftLocalizerDefaultCultureValue           |     108.21 ns |     1.132 ns |     1.059 ns |     106.70 ns |     110.48 ns |     3.40 |    0.03 | 0.0043 |      - |     216 B |          NA |
+| Method                                          | Mean            | Allocated | Δ vs previous (latency) |
+|-------------------------------------------------|----------------:|----------:|--------------------------:|
+| Localizer                                       | 21.425 ns       | -        | -32.7%                    |
+| JsonLocalizer                                   | 7.672 ns        | -        | -34.4%                    |
+| JsonLocalizerWithCreation                       | 115,225.380 ns  | 201,281 B| -18.1% (alloc -1.0%)      |
+| I18nJsonLocalizerWithCreation                   | 87,230.438 ns   | 149,281 B| -0.7%  (alloc -10.1%)     |
+| JsonLocalizerWithCreationAndExternalMemoryCache | 3,308.470 ns    | 5,576 B  | -25.0% (alloc -21.9%)     |
+| JsonLocalizerDefaultCultureValue                | 53.005 ns       | 216 B    | -31.0%                    |
+| MicrosoftLocalizerDefaultCultureValue           | 67.402 ns       | 216 B    | -37.7%                    |
+
+Key levers:
+- Streaming JSON (MemoryPool/ArrayPool), zero-copy on hot paths.
+- Pooling of `LocalizatedFormat`.
+- Bounded LRU cache + lock-free (ReaderWriterLockSlim) for serialized distributed cache.
+- Optimized i18n key concatenation.
+- Bounded/TTL collection of missing translations to avoid memory leaks.
 
 # Contributors
 

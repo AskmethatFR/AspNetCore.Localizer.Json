@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>    
   </PropertyGroup>
 
@@ -36,6 +36,9 @@
     <EmbeddedResource Include="encoding\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="interpolation\**\*.json" WithCulture="false" />
     <Content Include="physical\**\*.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="i18nFallback\**\*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

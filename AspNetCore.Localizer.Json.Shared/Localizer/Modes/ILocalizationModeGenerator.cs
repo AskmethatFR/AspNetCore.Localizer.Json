@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using AspNetCore.Localizer.Json.Format;
