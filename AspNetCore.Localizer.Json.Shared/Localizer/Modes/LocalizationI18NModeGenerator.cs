@@ -32,7 +32,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             foreach (string resourceName in resourceNames)
             {
-                string cultureName = GetCultureNameFromResource(resourceName);
+                string cultureName = GetCultureNameFromResource(resourceName, options.UseEmbeddedResources);
                 if (!IsRelevantCultureFile(cultureName, currentCulture, options))
                 {
                     continue;
@@ -92,15 +92,46 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return allowedCultures.Contains(cultureName);
         }
 
-        private static string GetCultureNameFromResource(string resourceName)
+        private static string GetCultureNameFromResource(string resourceName, bool useEmbeddedResources)
         {
+            if (useEmbeddedResources)
+            {
+                // Embedded resource names are dotted (e.g. "Namespace.Resources.fr.localization.json")
+                // The culture code is a segment before the file basename
+                var nameWithoutExt = Path.GetFileNameWithoutExtension(resourceName) ?? string.Empty;
+                var segments = nameWithoutExt.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+                // Walk segments in reverse to find the closest culture segment
+                for (int i = segments.Length - 1; i >= 0; i--)
+                {
+                    if (CultureNameRegex.IsMatch(segments[i]))
+                    {
+                        return segments[i];
+                    }
+                }
+
+                return string.Empty;
+            }
+
+            // For file-system paths, check the parent directory name (e.g. "Resources/fr/localization.json")
+            var directoryName = Path.GetDirectoryName(resourceName);
+            if (!string.IsNullOrEmpty(directoryName))
+            {
+                var dirSegment = Path.GetFileName(directoryName);
+                if (!string.IsNullOrEmpty(dirSegment) && CultureNameRegex.IsMatch(dirSegment))
+                {
+                    return dirSegment;
+                }
+            }
+
+            // Check filename suffix (e.g. "localization.fr.json")
             var fileName = Path.GetFileName(resourceName);
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName) ?? string.Empty;
-            var segments = fileNameWithoutExtension.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            var segments2 = fileNameWithoutExtension.Split('.', StringSplitOptions.RemoveEmptyEntries);
 
-            if (segments.Length > 1 && CultureNameRegex.IsMatch(segments[^1]))
+            if (segments2.Length > 1 && CultureNameRegex.IsMatch(segments2[^1]))
             {
-                return segments[^1];
+                return segments2[^1];
             }
 
             return string.Empty;

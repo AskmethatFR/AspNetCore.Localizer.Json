@@ -265,7 +265,7 @@ namespace AspNetCore.Localizer.Json.Localizer
                     _missingTranslations[cultureName].Remove(key);
                 }
 
-                Console.Error.WriteLine($"[MEMORY_DEBUG] Trimmed missing translations for {cultureName} to {MaxMissingTranslationsPerCulture} entries");
+
             }
 
             // Write to file

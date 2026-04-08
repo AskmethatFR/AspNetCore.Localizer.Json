@@ -112,11 +112,9 @@ namespace AspNetCore.Localizer.Json.Localizer
                 {
                     var oldestKey = _cachedPluralizationRules.Keys.First();
                     _cachedPluralizationRules.Remove(oldestKey);
-                    Console.WriteLine($"[MEMORY_DEBUG] Removed oldest pluralization rule for culture: {oldestKey}");
                 }
 
                 _cachedPluralizationRules[_currentCulture] = ruleSet;
-                Console.WriteLine($"[MEMORY_DEBUG] Cached pluralization rules count: {_cachedPluralizationRules.Count}");
             }
 
             return ruleSet;
@@ -152,9 +150,6 @@ namespace AspNetCore.Localizer.Json.Localizer
             var myFiles = GetJsonFilesPath(currentCulture).ToArray();
             if (myFiles.Length > 0)
             {
-                Console.Error.WriteLine($"[MEMORY_DEBUG] Loaded {myFiles.Length} files for culture: {currentCulture.Name}");
-                // list of files loaded
-                Console.Error.WriteLine($"[MEMORY_DEBUG] Loaded files: {string.Join(", ", myFiles)}");
                 var newLocalization = _localizationMode.ConstructLocalization(myFiles, currentCulture, LocalizationOptions.Value);
 
                 // Réutiliser le Lazy existant au lieu de le recréer
@@ -202,7 +197,7 @@ namespace AspNetCore.Localizer.Json.Localizer
                         (additionalPath.Any(path => name.Contains($".{path}.", StringComparison.OrdinalIgnoreCase)) ||
                         name.Contains($".{pathToLook}.", StringComparison.OrdinalIgnoreCase)) &&
                         WithBaseName(name) &&
-                        IsRelevantCultureFile(name, cultureCandidates, defaultFile))
+                        IsRelevantEmbeddedCultureFile(name, cultureCandidates))
                     .ToList();
             }
 
@@ -282,6 +277,41 @@ namespace AspNetCore.Localizer.Json.Localizer
             bool isInvariantCulture = string.Equals(cultureSegment, CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase);
 
             return cultureCandidates.Contains(cultureSegment) && !isInvariantCulture;
+        }
+
+        /// <summary>
+        /// Filters embedded resource names by culture. Embedded resources use dotted names
+        /// (e.g. "Namespace.Resources.fr.localization.json") where the culture code is a
+        /// path segment, not a filename suffix.
+        /// </summary>
+        private bool IsRelevantEmbeddedCultureFile(string resourceName,
+            HashSet<string> cultureCandidates)
+        {
+            if (!resourceName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var nameWithoutExt = Path.GetFileNameWithoutExtension(resourceName) ?? string.Empty;
+            var segments = nameWithoutExt.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+            // Find the resource path segment and only look after it for culture codes
+            var pathToLook = LocalizationOptions.Value.ResourcesPath ?? "Resources";
+            var resourcePathIndex = Array.FindIndex(segments,
+                s => s.Equals(pathToLook, StringComparison.OrdinalIgnoreCase));
+            var startIndex = resourcePathIndex >= 0 ? resourcePathIndex + 1 : 0;
+
+            for (var i = startIndex; i < segments.Length; i++)
+            {
+                if (CultureNameRegex.IsMatch(segments[i]) &&
+                    !string.Equals(segments[i], CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return cultureCandidates.Contains(segments[i]);
+                }
+            }
+
+            // No culture segment found: treat as neutral/default resource.
+            return true;
         }
         #endregion
 

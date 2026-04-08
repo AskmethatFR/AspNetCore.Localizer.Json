@@ -38,7 +38,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             });
         }
 
-        //[TestMethod]
+        [TestMethod]
         public void Should_Read_Color_NoFallback()
         {
             InitLocalizer("en-AU");
@@ -108,7 +108,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             Assert.IsFalse(luminosity.ResourceNotFound);
         }
 
-        //[TestMethod]
+        [TestMethod]
         public void Should_Read_ResourceMissingCulture_FallbackToResourceName()
         {
             InitLocalizer("zh-CN");
@@ -117,7 +117,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             Assert.IsTrue(result.ResourceNotFound);
         }
 
-        //[TestMethod]
+        [TestMethod]
         public void Should_Read_MissingResource_FallbackToResourceName()
         {
             InitLocalizer("en-AU");
@@ -127,7 +127,6 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
         }
 
         [TestMethod]
-        //Plant only on CI
         public void Should_Read_AllStringsWithParentFallback()
         {
             InitLocalizer("en-AU");

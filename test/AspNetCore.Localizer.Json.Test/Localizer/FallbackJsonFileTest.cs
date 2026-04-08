@@ -90,7 +90,6 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
         }
 
         [TestMethod]
-        //Plant only on CI
         public void Should_Read_AllStringsWithParentFallback()
         {
             InitLocalizer("en-AU");

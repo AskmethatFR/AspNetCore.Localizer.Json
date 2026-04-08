@@ -31,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Wasm", "Wasm", "{0B1CF6D8-5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCore.Localizer.Json.Sample.I18NTestVersion10", "test\AspNetCore.Localizer.Json.Sample.I18NTestVersion10\AspNetCore.Localizer.Json.Sample.I18NTestVersion10.csproj", "{70D2BAA3-AFB5-414E-A60A-F363BACF26AE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCore.Localizer.Json.StandaloneWasm", "AspNetCore.Localizer.Json.StandaloneWasm\AspNetCore.Localizer.Json.StandaloneWasm.csproj", "{AF8FAB56-DFF3-4295-A3CF-83C6A7E4E626}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{70D2BAA3-AFB5-414E-A60A-F363BACF26AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70D2BAA3-AFB5-414E-A60A-F363BACF26AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70D2BAA3-AFB5-414E-A60A-F363BACF26AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF8FAB56-DFF3-4295-A3CF-83C6A7E4E626}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF8FAB56-DFF3-4295-A3CF-83C6A7E4E626}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF8FAB56-DFF3-4295-A3CF-83C6A7E4E626}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF8FAB56-DFF3-4295-A3CF-83C6A7E4E626}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,5 +93,6 @@ Global
 		{994F633A-6703-46CF-8875-22990844E73A} = {0B1CF6D8-57B5-4BB1-B177-5A7A242D31A5}
 		{4FC0246B-A61E-4867-9219-472AE6249698} = {0B1CF6D8-57B5-4BB1-B177-5A7A242D31A5}
 		{70D2BAA3-AFB5-414E-A60A-F363BACF26AE} = {2D5B1281-0057-4F03-B31D-D6B7396629B2}
+		{AF8FAB56-DFF3-4295-A3CF-83C6A7E4E626} = {0B1CF6D8-57B5-4BB1-B177-5A7A242D31A5}
 	EndGlobalSection
 EndGlobal
