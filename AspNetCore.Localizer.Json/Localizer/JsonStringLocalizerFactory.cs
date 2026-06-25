@@ -32,7 +32,7 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         public IStringLocalizer Create(string baseName, string location)
         {
-            return _localizerPool.Get();
+            return new JsonStringLocalizer(_localizationOptions, baseName);
         }
     }
 

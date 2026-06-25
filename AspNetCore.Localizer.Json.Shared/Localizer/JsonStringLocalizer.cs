@@ -19,7 +19,6 @@ namespace AspNetCore.Localizer.Json.Localizer
         private readonly string? _missingTranslationsFile = null;
         private readonly Dictionary<string, Dictionary<string, string>> _missingTranslations = new();
         private bool _disposed = false;
-        private const int MaxMissingTranslationsPerCulture = 1000;
 
         public JsonStringLocalizer(IOptions<JsonLocalizationOptions> localizationOptions) : base(localizationOptions)
         {
@@ -44,19 +43,12 @@ namespace AspNetCore.Localizer.Json.Localizer
             {
                 if (disposing)
                 {
-                    // Dispose managed resources
                     _missingTranslations.Clear();
                 }
                 _disposed = true;
             }
 
             base.Dispose(disposing);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         private static LocalizedString ConvertToChar(string value, char c, int additionalRepeats = 0) =>
@@ -254,10 +246,10 @@ namespace AspNetCore.Localizer.Json.Localizer
             _missingTranslations[cultureName][name] = name;
 
             // Limiter la taille du cache des traductions manquantes
-            if (_missingTranslations[cultureName].Count > MaxMissingTranslationsPerCulture)
+            if (_missingTranslations[cultureName].Count > LocalizationOptions.Value.MaxMissingTranslations)
             {
                 var keysToRemove = _missingTranslations[cultureName].Keys
-                    .Take(_missingTranslations[cultureName].Count - MaxMissingTranslationsPerCulture)
+                    .Take(_missingTranslations[cultureName].Count - LocalizationOptions.Value.MaxMissingTranslations)
                     .ToList();
 
                 foreach (var key in keysToRemove)
