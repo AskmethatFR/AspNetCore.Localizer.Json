@@ -96,5 +96,59 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             Assert.AreEqual("NotFound", result);
         }
 
+        [TestMethod]
+        public void GetString_NonBoolLastArgument_DoesNotTriggerPlural()
+        {
+            InitLocalizer();
+
+            var result = localizer.GetString("PluralUser", 42);
+
+            Assert.AreEqual("Utilisateur|Utilisateurs", result);
+        }
+
+        [TestMethod]
+        public void GetString_NoArguments_ReturnsFullValue()
+        {
+            InitLocalizer();
+
+            var result = localizer.GetString("PluralUser");
+
+            Assert.AreEqual("Utilisateur|Utilisateurs", result);
+        }
+
+        [TestMethod]
+        public void GetString_BoolLastArgument_FormatStringWithSeparator_TriggersPlural()
+        {
+            InitLocalizer();
+
+            var singular = localizer.GetString("PluralUser", false);
+            var plural = localizer.GetString("PluralUser", true);
+
+            Assert.AreEqual("Utilisateur", singular);
+            Assert.AreEqual("Utilisateurs", plural);
+        }
+
+        [TestMethod]
+        public void GetPlural_DifferentCounts_ReturnsExpectedResults()
+        {
+            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
+
+            var localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            {
+                DefaultCulture = new CultureInfo("en-US"),
+                SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>
+                {
+                    new CultureInfo("en-US"),
+                    new CultureInfo("fr-FR")
+                },
+                ResourcesPath = "i18nPluralization",
+                LocalizationMode = LocalizationMode.I18n,
+                AssemblyHelper = new AssemblyStub(typeof(PluralizationJsonTest).Assembly)
+            });
+
+            Assert.AreEqual("1 User", localizer.GetPlural("Title", 1).Value);
+            Assert.AreEqual("2 Users", localizer.GetPlural("Title", 2).Value);
+            Assert.AreEqual("0 Users", localizer.GetPlural("Title", 0).Value);
+        }
     }
 }
