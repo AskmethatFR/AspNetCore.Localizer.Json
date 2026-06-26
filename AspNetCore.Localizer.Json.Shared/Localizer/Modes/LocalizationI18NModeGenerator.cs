@@ -27,8 +27,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             CultureInfo currentCulture,
             JsonLocalizationOptions options)
         {
-            // Créer un nouveau dictionnaire pour éviter les données résiduelles
-            localization = new Dictionary<string, LocalizatedFormat>();
+            var localization = new Dictionary<string, LocalizatedFormat>();
 
             foreach (string resourceName in resourceNames)
             {
@@ -54,7 +53,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     }
                 }
 
-                AddValueToLocalization(options, resourceName, isParentForFile);
+                AddValueToLocalization(localization, options, resourceName, isParentForFile);
             }
 
             return localization;
@@ -137,7 +136,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return string.Empty;
         }
 
-        private void AddValueToLocalization(JsonLocalizationOptions options, string resourceName, bool isParent)
+        private void AddValueToLocalization(Dictionary<string, LocalizatedFormat> localization, JsonLocalizationOptions options, string resourceName, bool isParent)
         {
             try
             {
@@ -160,7 +159,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 {
                     if (jsonReader.TokenType == JsonTokenType.StartObject)
                     {
-                        TraverseJson(ref jsonReader, string.Empty, isParent);
+                        TraverseJson(localization, ref jsonReader, string.Empty, isParent);
                     }
                 }
             }
@@ -171,7 +170,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             }
         }
 
-        private void TraverseJson(ref Utf8JsonReader jsonReader, string baseKey, bool isParent)
+        private void TraverseJson(Dictionary<string, LocalizatedFormat> localization, ref Utf8JsonReader jsonReader, string baseKey, bool isParent)
         {
             string currentProperty = baseKey;
 
@@ -195,13 +194,14 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     case JsonTokenType.String:
                         string value = jsonReader.GetString() ?? string.Empty;
                         AddOrUpdateLocalizedValue(
+                            localization,
                             GetLocalizedValue(new KeyValuePair<string, string>(currentProperty, value), isParent),
                             new KeyValuePair<string, string>(currentProperty, value)
                         );
                         break;
 
                     case JsonTokenType.StartObject:
-                        TraverseJson(ref jsonReader, currentProperty, isParent);
+                        TraverseJson(localization, ref jsonReader, currentProperty, isParent);
                         break;
 
                     case JsonTokenType.EndObject:

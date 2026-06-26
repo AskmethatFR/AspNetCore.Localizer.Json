@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -25,9 +26,9 @@ namespace AspNetCore.Localizer.Json.Localizer
         private TimeSpan _memCacheDuration;
 
         private const string CacheKey = "LocalizationBlob";
-        private string _currentCulture = string.Empty;
+        protected string _currentCulture = string.Empty;
         // Lazy-loaded localization dictionary to defer resource loading until first access
-        protected Lazy<Dictionary<string, LocalizatedFormat>> _lazyLocalization;
+        protected ConcurrentDictionary<string, Dictionary<string, LocalizatedFormat>> _localizationCache = new();
 
         private readonly Lazy<Dictionary<string, IPluralizationRuleSet>> _pluralizationRuleSets = new(() => new Dictionary<string, IPluralizationRuleSet>());
 
@@ -56,10 +57,6 @@ namespace AspNetCore.Localizer.Json.Localizer
 
             _memCacheDuration = LocalizationOptions.Value.CacheDuration;
 
-            // Initialiser _lazyLocalization avec un dictionnaire vide
-            _lazyLocalization = new Lazy<Dictionary<string, LocalizatedFormat>>(
-                () => new Dictionary<string, LocalizatedFormat>());
-
             _localizationMode = LocalizationModeFactory.GetLocalisationFromMode(LocalizationOptions.Value.LocalizationMode);
         }
 
@@ -87,37 +84,24 @@ namespace AspNetCore.Localizer.Json.Localizer
             {
                 if (key != null && MemCache.TryGetValue(key, out var cachedLocalization))
                 {
-                    // Réutiliser le Lazy existant au lieu de le recréer
-                    UpdateLazyLocalization(cachedLocalization);
                     SetCurrentCultureToCache(cultureToUse);
+                    UpdateLazyLocalization(cultureToUse.Name, cachedLocalization);
                     return;
                 }
             }
         }
 
-        private readonly Dictionary<string, IPluralizationRuleSet> _cachedPluralizationRules = new();
+        private readonly ConcurrentDictionary<string, IPluralizationRuleSet> _cachedPluralizationRules = new();
         private ILocalizationModeGenerator _localizationMode;
-        private const int MaxCachedPluralizationRules = 10;
 
         protected IPluralizationRuleSet GetPluralizationToUse()
         {
-            if (!_cachedPluralizationRules.TryGetValue(_currentCulture, out var ruleSet))
+            return _cachedPluralizationRules.GetOrAdd(_currentCulture, culture =>
             {
-                ruleSet = _pluralizationRuleSets.Value.TryGetValue(_currentCulture, out var foundRuleSet)
+                return _pluralizationRuleSets.Value.TryGetValue(culture, out var foundRuleSet)
                     ? foundRuleSet
                     : new DefaultPluralizationRuleSet();
-
-                // Limiter la taille du cache LRU
-                if (_cachedPluralizationRules.Count >= MaxCachedPluralizationRules)
-                {
-                    var oldestKey = _cachedPluralizationRules.Keys.First();
-                    _cachedPluralizationRules.Remove(oldestKey);
-                }
-
-                _cachedPluralizationRules[_currentCulture] = ruleSet;
-            }
-
-            return ruleSet;
+            });
         }
         #endregion
 
@@ -133,39 +117,33 @@ namespace AspNetCore.Localizer.Json.Localizer
             if (!MemCache.TryGetValue(GetCacheKey(currentCulture), out var cachedLocalization))
             {
                 ConstructLocalizationObject(currentCulture);
-                MemCache.Set(GetCacheKey(currentCulture), _lazyLocalization.Value, _memCacheDuration);
+                if (_localizationCache.TryGetValue(currentCulture.Name, out var dict))
+                {
+                    MemCache.Set(GetCacheKey(currentCulture), dict, _memCacheDuration);
+                }
                 SetCurrentCultureToCache(currentCulture);
                 return false;
             }
 
-            // Réutiliser le Lazy existant au lieu de le recréer
-            UpdateLazyLocalization(cachedLocalization);
             SetCurrentCultureToCache(currentCulture);
+            UpdateLazyLocalization(currentCulture.Name, cachedLocalization);
             return true;
         }
 
         private void ConstructLocalizationObject(CultureInfo currentCulture)
         {
-            // Localization is now lazy-loaded, so we populate it on first access
             var myFiles = GetJsonFilesPath(currentCulture).ToArray();
             if (myFiles.Length > 0)
             {
                 var newLocalization = _localizationMode.ConstructLocalization(myFiles, currentCulture, LocalizationOptions.Value);
 
-                // Réutiliser le Lazy existant au lieu de le recréer
-                UpdateLazyLocalization(newLocalization);
+                UpdateLazyLocalization(currentCulture.Name, newLocalization);
             }
         }
 
-        /// <summary>
-        /// Crée un nouveau Lazy<Dictionary> pour chaque culture.
-        /// Cela évite la corruption des données lors des changements de culture.
-        /// </summary>
-        private void UpdateLazyLocalization(Dictionary<string, LocalizatedFormat> newLocalization)
+        private void UpdateLazyLocalization(string culture, Dictionary<string, LocalizatedFormat> newLocalization)
         {
-            // Toujours créer un nouveau Lazy pour chaque culture
-            // Cela évite la corruption des données quand on réutilise le même dictionnaire
-            _lazyLocalization = new Lazy<Dictionary<string, LocalizatedFormat>>(() => newLocalization);
+            _localizationCache[culture] = newLocalization;
         }
 
         private IEnumerable<string> GetJsonFilesPath(CultureInfo culture)
@@ -327,10 +305,9 @@ namespace AspNetCore.Localizer.Json.Localizer
                     MemCache?.Dispose();
 
                     // Clear collections
-                    _cachedPluralizationRules?.Clear();
+                    _cachedPluralizationRules.Clear();
 
-                    // Do not clear _lazyLocalization: it may be shared via cache and clearing
-                    // would wipe cached translations for other scopes.
+                    _localizationCache.Clear();
                     if (_pluralizationRuleSets?.IsValueCreated == true)
                     {
                         _pluralizationRuleSets.Value?.Clear();
