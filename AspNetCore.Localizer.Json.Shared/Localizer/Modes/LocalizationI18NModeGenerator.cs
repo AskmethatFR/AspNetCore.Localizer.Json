@@ -14,20 +14,20 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
     {
         private static readonly Regex CultureNameRegex = new("^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8}){0,2}$", RegexOptions.Compiled);
 
-        protected LocalizatedFormat GetLocalizedValue(KeyValuePair<string, string> temp, bool isParent)
+        protected LocalizedFormat GetLocalizedValue(KeyValuePair<string, string> temp, bool isParent)
         {
-            LocalizatedFormat format = LocalizatedFormatPool.Rent();
+            LocalizedFormat format = LocalizedFormatPool.Rent();
             format.IsParent = isParent;
             format.Value = temp.Value;
             return format;
         }
 
-        public Dictionary<string, LocalizatedFormat> ConstructLocalization(
+        public Dictionary<string, LocalizedFormat> ConstructLocalization(
             IEnumerable<string> resourceNames,
             CultureInfo currentCulture,
             JsonLocalizationOptions options)
         {
-            var localization = new Dictionary<string, LocalizatedFormat>();
+            var localization = new Dictionary<string, LocalizedFormat>();
 
             foreach (string resourceName in resourceNames)
             {
@@ -136,7 +136,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return string.Empty;
         }
 
-        private void AddValueToLocalization(Dictionary<string, LocalizatedFormat> localization, JsonLocalizationOptions options, string resourceName, bool isParent)
+        private void AddValueToLocalization(Dictionary<string, LocalizedFormat> localization, JsonLocalizationOptions options, string resourceName, bool isParent)
         {
             try
             {
@@ -170,7 +170,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             }
         }
 
-        private void TraverseJson(Dictionary<string, LocalizatedFormat> localization, ref Utf8JsonReader jsonReader, string baseKey, bool isParent)
+        private void TraverseJson(Dictionary<string, LocalizedFormat> localization, ref Utf8JsonReader jsonReader, string baseKey, bool isParent)
         {
             string currentProperty = baseKey;
 
