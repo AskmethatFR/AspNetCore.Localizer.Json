@@ -18,8 +18,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             _options = options;
             
-            // Créer un nouveau dictionnaire pour éviter les données résiduelles
-            localization = new Dictionary<string, LocalizatedFormat>();
+            var localization = new Dictionary<string, LocalizatedFormat>();
 
             string parentCultureName = currentCulture.Parent.Name;
             string defaultCultureName = _options.DefaultCulture?.Name;
@@ -39,7 +38,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                     foreach (KeyValuePair<string, JsonLocalizationFormat> temp in tempLocalization)
                     {
                         LocalizatedFormat localizedValue = GetLocalizedValue(currentCulture, parentCultureName, defaultCultureName, temp);
-                        AddOrUpdateLocalizedValue(localizedValue, temp);
+                        AddOrUpdateLocalizedValue(localization, localizedValue, temp);
                     }
                 }
                 catch
