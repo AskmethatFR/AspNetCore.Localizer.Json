@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using AspNetCore.Localizer.Json.JsonOptions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
@@ -309,12 +310,24 @@ namespace AspNetCore.Localizer.Json.Localizer
                 try
                 {
                     var json = JsonSerializer.Serialize(cultureDict.ToDictionary(kvp => kvp.Key, kvp => kvp.Value), new JsonSerializerOptions { WriteIndented = true });
-                    File.WriteAllText(fileNameWithCulture, json);
+                    Task.Run(() => WriteFileSynchronously(fileNameWithCulture, json));
                 }
                 catch (Exception ex)
                 {
                     Console.Error.WriteLine($"Error writing missing translations to file: {ex.Message}");
                 }
+            }
+        }
+
+        private static void WriteFileSynchronously(string path, string json)
+        {
+            try
+            {
+                File.WriteAllText(path, json);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error writing missing translations to file: {ex.Message}");
             }
         }
     }

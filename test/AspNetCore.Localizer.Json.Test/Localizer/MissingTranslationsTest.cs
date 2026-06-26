@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using AspNetCore.Localizer.Json.JsonOptions;
 using LocalizedString = Microsoft.Extensions.Localization.LocalizedString;
 using System.IO;
@@ -40,20 +41,57 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
         public void Should_Track_Colored_NotFound()
         {
             var defaultJsonFile = JsonLocalizationOptions.DEFAULT_MISSING_TRANSLATIONS;
-            //add 'default' before extension in filename
             var extension = Path.GetExtension(defaultJsonFile);
             var name = Path.GetFileNameWithoutExtension(defaultJsonFile);
             var actualName = $"{name}-default{extension}";
-            
+
             if (File.Exists(actualName))
                 File.Delete(actualName);
-            InitLocalizer("en-AU");
-            var result = localizer.GetString("Colored",false);
-            Assert.IsTrue(result.ResourceNotFound);
-            // list all files that have .json extension
-            var allJsonFiles = Directory.GetFiles($".", "*.json").ToList();
 
-            Assert.IsTrue(allJsonFiles.Exists(s => s.Contains(name)));
+            InitLocalizer("en-AU");
+
+            var result = localizer.GetString("Colored", false);
+            Assert.IsTrue(result.ResourceNotFound);
+
+            var deadline = DateTime.UtcNow.AddSeconds(2);
+            bool found = false;
+            while (DateTime.UtcNow < deadline && !found)
+            {
+                var allJsonFiles = Directory.GetFiles(".", "*.json").ToList();
+                found = allJsonFiles.Exists(s => s.Contains(name));
+                if (!found)
+                    System.Threading.Thread.Sleep(50);
+            }
+
+            Assert.IsTrue(found, $"Missing translations file '{actualName}' should exist (async write may be deferred)");
+        }
+
+        [TestMethod]
+        public async Task MissingTranslation_WithCollectToJSON_WritesFileEventually()
+        {
+            var defaultJsonFile = JsonLocalizationOptions.DEFAULT_MISSING_TRANSLATIONS;
+            var extension = Path.GetExtension(defaultJsonFile);
+            var name = Path.GetFileNameWithoutExtension(defaultJsonFile);
+            var actualName = $"{name}-en-AU{extension}";
+
+            if (File.Exists(actualName))
+                File.Delete(actualName);
+
+            InitLocalizer("en-AU");
+
+            localizer.GetString("AsyncTestKey", false);
+
+            var deadline = DateTime.UtcNow.AddSeconds(2);
+            bool found = false;
+            while (DateTime.UtcNow < deadline && !found)
+            {
+                found = File.Exists(actualName);
+                if (!found)
+                    await Task.Delay(50);
+            }
+
+            Assert.IsTrue(found,
+                $"Missing translations file '{actualName}' should be written eventually (async)");
         }
 
         /// <summary>
