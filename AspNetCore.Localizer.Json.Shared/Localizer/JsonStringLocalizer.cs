@@ -81,7 +81,15 @@ namespace AspNetCore.Localizer.Json.Localizer
         {
             if (arguments is { Length: > 0 })
             {
-                value = string.Format(value, arguments);
+                try
+                {
+                    value = string.Format(value, arguments);
+                }
+                catch (FormatException)
+                {
+                    Console.Error.WriteLine($"FormatException in FormatString: invalid format '{value}'");
+                    return value;
+                }
 
                 if (arguments[^1] is bool isPlural)
                 {
@@ -136,7 +144,16 @@ namespace AspNetCore.Localizer.Json.Localizer
             Array.Copy(arguments, 0, argumentsWithCount, 1, arguments.Length);
 
             // format the string
-            string value = string.Format(format, argumentsWithCount);
+            string value;
+            try
+            {
+                value = string.Format(format, argumentsWithCount);
+            }
+            catch (FormatException)
+            {
+                Console.Error.WriteLine($"FormatException in FormatLocalizedString: invalid format '{format}'");
+                return new LocalizedString(name, format, resourceNotFound);
+            }
             return new LocalizedString(name, value, resourceNotFound);
         }
 
