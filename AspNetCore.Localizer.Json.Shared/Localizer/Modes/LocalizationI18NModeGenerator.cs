@@ -165,7 +165,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             }
             catch (Exception ex)
             {
-                throw new InvalidDataException($"Erreur lors de la lecture de la ressource incorporée '{resourceName}'",
+                throw new InvalidDataException($"Error reading embedded resource '{resourceName}'",
                     ex);
             }
         }
