@@ -41,7 +41,7 @@ namespace AspNetCore.Localizer.Json.JsonOptions
             get => defaultCulture;
             set
             {
-                if (value != defaultCulture)
+                if (value == null || !value.Equals(defaultCulture))
                 {
                     defaultCulture = value ?? CultureInfo.InvariantCulture;
                 }
@@ -58,7 +58,7 @@ namespace AspNetCore.Localizer.Json.JsonOptions
             get => defaultUICulture;
             set
             {
-                if (value != defaultUICulture)
+                if (value == null || !value.Equals(defaultUICulture))
                 {
                     defaultUICulture = value ?? CultureInfo.InvariantCulture;
                 }
