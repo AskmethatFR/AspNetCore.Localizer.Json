@@ -21,9 +21,9 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             using var memCache = new MemoryCache(new MemoryCacheOptions());
             var cache = new CacheHelper(memCache);
             var key = "test-key";
-            var value = new Dictionary<string, LocalizatedFormat>
+            var value = new Dictionary<string, LocalizedFormat>
             {
-                ["hello"] = new LocalizatedFormat { Value = "world" }
+                ["hello"] = new LocalizedFormat { Value = "world" }
             };
 
             cache.Set(key, value, TimeSpan.FromMinutes(5));
@@ -51,9 +51,9 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             var distCache = new FakeDistributedCache();
             var cache = new CacheHelper(distCache);
             var key = "dist-key";
-            var value = new Dictionary<string, LocalizatedFormat>
+            var value = new Dictionary<string, LocalizedFormat>
             {
-                ["foo"] = new LocalizatedFormat { Value = "bar" }
+                ["foo"] = new LocalizedFormat { Value = "bar" }
             };
 
             cache.Set(key, value, TimeSpan.FromMinutes(5));
@@ -81,9 +81,9 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             using var memCache = new MemoryCache(new MemoryCacheOptions());
             var cache = new CacheHelper(memCache);
             var key = "remove-key";
-            var value = new Dictionary<string, LocalizatedFormat>
+            var value = new Dictionary<string, LocalizedFormat>
             {
-                ["x"] = new LocalizatedFormat { Value = "y" }
+                ["x"] = new LocalizedFormat { Value = "y" }
             };
 
             cache.Set(key, value, TimeSpan.FromMinutes(5));
@@ -100,9 +100,9 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             var distCache = new FakeDistributedCache();
             var cache = new CacheHelper(distCache);
             var key = "dist-remove";
-            var value = new Dictionary<string, LocalizatedFormat>
+            var value = new Dictionary<string, LocalizedFormat>
             {
-                ["a"] = new LocalizatedFormat { Value = "b" }
+                ["a"] = new LocalizedFormat { Value = "b" }
             };
 
             cache.Set(key, value, TimeSpan.FromMinutes(5));
@@ -173,9 +173,9 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             Parallel.For(0, 50, i =>
             {
                 var key = $"key-{i % 10}";
-                var value = new Dictionary<string, LocalizatedFormat>
+                var value = new Dictionary<string, LocalizedFormat>
                 {
-                    ["val"] = new LocalizatedFormat { Value = $"value-{i}" }
+                    ["val"] = new LocalizedFormat { Value = $"value-{i}" }
                 };
 
                 try
@@ -204,9 +204,9 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             Parallel.For(0, 50, i =>
             {
                 var key = $"dist-key-{i % 10}";
-                var value = new Dictionary<string, LocalizatedFormat>
+                var value = new Dictionary<string, LocalizedFormat>
                 {
-                    ["val"] = new LocalizatedFormat { Value = $"value-{i}" }
+                    ["val"] = new LocalizedFormat { Value = $"value-{i}" }
                 };
 
                 try
@@ -264,11 +264,11 @@ namespace AspNetCore.Localizer.Json.Test.Caching
             Assert.IsFalse(cache.TryGetValue("second", out _));
         }
 
-        private static Dictionary<string, LocalizatedFormat> MakeEntry(string value)
+        private static Dictionary<string, LocalizedFormat> MakeEntry(string value)
         {
-            return new Dictionary<string, LocalizatedFormat>
+            return new Dictionary<string, LocalizedFormat>
             {
-                [value] = new LocalizatedFormat { Value = value }
+                [value] = new LocalizedFormat { Value = value }
             };
         }
     }

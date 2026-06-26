@@ -37,7 +37,7 @@ internal sealed class CacheHelper
         _maxCacheSize = maxCacheSize;
     }
 
-    public bool TryGetValue(string cacheKey, out Dictionary<string, LocalizatedFormat> localization)
+    public bool TryGetValue(string cacheKey, out Dictionary<string, LocalizedFormat> localization)
     {
         if (_memoryCache != null && _memoryCache.TryGetValue(cacheKey, out localization))
         {
@@ -49,7 +49,7 @@ internal sealed class CacheHelper
             if (_serializedMemoryCache.TryGetValue(cacheKey, out var entry))
             {
                 UpdateLruAccess(cacheKey, entry);
-                localization = JsonSerializer.Deserialize<Dictionary<string, LocalizatedFormat>>(entry.Value);
+                localization = JsonSerializer.Deserialize<Dictionary<string, LocalizedFormat>>(entry.Value);
                 return true;
             }
 
@@ -60,7 +60,7 @@ internal sealed class CacheHelper
                 _serializedMemoryCache[cacheKey] = newEntry;
                 UpdateLruAccess(cacheKey, newEntry);
                 EvictIfNeeded();
-                localization = JsonSerializer.Deserialize<Dictionary<string, LocalizatedFormat>>(json);
+                localization = JsonSerializer.Deserialize<Dictionary<string, LocalizedFormat>>(json);
                 return true;
             }
         }
@@ -74,7 +74,7 @@ internal sealed class CacheHelper
         _lruLock?.Dispose();
     }
 
-    public void Set(string cacheKey, Dictionary<string, LocalizatedFormat> localization, TimeSpan cacheDuration)
+    public void Set(string cacheKey, Dictionary<string, LocalizedFormat> localization, TimeSpan cacheDuration)
     {
         if (_memoryCache == null && _distributedCache == null)
         {

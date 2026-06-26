@@ -9,11 +9,11 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
     {
         protected JsonLocalizationOptions _options;
 
-        protected static void AddOrUpdateLocalizedValue<T>(Dictionary<string, LocalizatedFormat> localization, LocalizatedFormat localizedValue, KeyValuePair<string, T> temp)
+        protected static void AddOrUpdateLocalizedValue<T>(Dictionary<string, LocalizedFormat> localization, LocalizedFormat localizedValue, KeyValuePair<string, T> temp)
         {
             if (localizedValue.Value is null)
             {
-                LocalizatedFormatPool.Return(localizedValue);
+                LocalizedFormatPool.Return(localizedValue);
                 return;
             }
 
@@ -21,12 +21,12 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             {
                 if (existingValue.IsParent && !localizedValue.IsParent)
                 {
-                    LocalizatedFormatPool.Return(existingValue);
+                    LocalizedFormatPool.Return(existingValue);
                     localization[temp.Key] = localizedValue;
                 }
                 else
                 {
-                    LocalizatedFormatPool.Return(localizedValue);
+                    LocalizedFormatPool.Return(localizedValue);
                 }
             }
             else

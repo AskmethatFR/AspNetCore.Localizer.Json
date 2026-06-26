@@ -13,12 +13,12 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 {
     internal class LocalizationBasicModeGenerator : LocalizationModeBase, ILocalizationModeGenerator
     {
-        public Dictionary<string, LocalizatedFormat> ConstructLocalization(
+        public Dictionary<string, LocalizedFormat> ConstructLocalization(
             IEnumerable<string> resourceNames, CultureInfo currentCulture, JsonLocalizationOptions options)
         {
             _options = options;
             
-            var localization = new Dictionary<string, LocalizatedFormat>();
+            var localization = new Dictionary<string, LocalizedFormat>();
 
             string parentCultureName = currentCulture.Parent.Name;
             string defaultCultureName = _options.DefaultCulture?.Name;
@@ -37,7 +37,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
                     foreach (KeyValuePair<string, JsonLocalizationFormat> temp in tempLocalization)
                     {
-                        LocalizatedFormat localizedValue = GetLocalizedValue(currentCulture, parentCultureName, defaultCultureName, temp);
+                        LocalizedFormat localizedValue = GetLocalizedValue(currentCulture, parentCultureName, defaultCultureName, temp);
                         AddOrUpdateLocalizedValue(localization, localizedValue, temp);
                     }
                 }
@@ -51,7 +51,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return localization;
         }
 
-        private LocalizatedFormat GetLocalizedValue(
+        private LocalizedFormat GetLocalizedValue(
             CultureInfo currentCulture,
             string parentCultureName,
             string? defaultCultureName,
@@ -61,7 +61,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             if (localizationFormat.Values.TryGetValue(currentCulture.Name, out string value))
             {
-                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                LocalizedFormat format = LocalizedFormatPool.Rent();
                 format.IsParent = false;
                 format.Value = value;
                 return format;
@@ -69,7 +69,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             if (localizationFormat.Values.TryGetValue(parentCultureName, out value))
             {
-                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                LocalizedFormat format = LocalizedFormatPool.Rent();
                 format.IsParent = true;
                 format.Value = value;
                 return format;
@@ -77,7 +77,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             if (localizationFormat.Values.TryGetValue(string.Empty, out value))
             {
-                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                LocalizedFormat format = LocalizedFormatPool.Rent();
                 format.IsParent = true;
                 format.Value = value;
                 return format;
@@ -85,13 +85,13 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             if (defaultCultureName != null && localizationFormat.Values.TryGetValue(defaultCultureName, out value))
             {
-                LocalizatedFormat format = LocalizatedFormatPool.Rent();
+                LocalizedFormat format = LocalizedFormatPool.Rent();
                 format.IsParent = true;
                 format.Value = value;
                 return format;
             }
 
-            LocalizatedFormat nullFormat = LocalizatedFormatPool.Rent();
+            LocalizedFormat nullFormat = LocalizedFormatPool.Rent();
             nullFormat.IsParent = false;
             nullFormat.Value = null;
             return nullFormat;

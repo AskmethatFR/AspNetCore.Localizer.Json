@@ -7,7 +7,7 @@ namespace AspNetCore.Localizer.Json.Format
         public Dictionary<string, string> Values { get; set; } = new Dictionary<string, string>();
     }
 
-    internal class LocalizatedFormat
+    internal class LocalizedFormat
     {
         public bool IsParent { get; set; }
         public string Value { get; set; }

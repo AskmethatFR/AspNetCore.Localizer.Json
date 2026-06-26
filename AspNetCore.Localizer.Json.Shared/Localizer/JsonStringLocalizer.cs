@@ -207,7 +207,7 @@ namespace AspNetCore.Localizer.Json.Localizer
             // Initialize culture BEFORE lookup to ensure culture-aware access
             var culture = InitCorrectJsonCulture(true);
 
-            if (_localizationCache.TryGetValue(_currentCulture, out var dict) && dict.TryGetValue(name, out LocalizatedFormat? localizedValue))
+            if (_localizationCache.TryGetValue(_currentCulture, out var dict) && dict.TryGetValue(name, out LocalizedFormat? localizedValue))
             {
                 return localizedValue.Value;
             }

@@ -25,7 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationModeBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\Modes\LocalizationModeFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Localizer\PluralizationConstants.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Localizer\Pooling\LocalizatedFormatPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Localizer\Pooling\LocalizedFormatPool.cs" />
   </ItemGroup>
   <Target Name="AspNetCore_Localizer_Json_Shared">
     <Message Text="AspNetCore_Localizer_Json_Shared target executed successfully" Importance="high" />

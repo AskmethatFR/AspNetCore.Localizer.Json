@@ -28,7 +28,7 @@ namespace AspNetCore.Localizer.Json.Localizer
         private const string CacheKey = "LocalizationBlob";
         protected string _currentCulture = string.Empty;
         // Lazy-loaded localization dictionary to defer resource loading until first access
-        protected ConcurrentDictionary<string, Dictionary<string, LocalizatedFormat>> _localizationCache = new();
+        protected ConcurrentDictionary<string, Dictionary<string, LocalizedFormat>> _localizationCache = new();
 
         private readonly Lazy<Dictionary<string, IPluralizationRuleSet>> _pluralizationRuleSets = new(() => new Dictionary<string, IPluralizationRuleSet>());
 
@@ -141,7 +141,7 @@ namespace AspNetCore.Localizer.Json.Localizer
             }
         }
 
-        private void UpdateLazyLocalization(string culture, Dictionary<string, LocalizatedFormat> newLocalization)
+        private void UpdateLazyLocalization(string culture, Dictionary<string, LocalizedFormat> newLocalization)
         {
             _localizationCache[culture] = newLocalization;
         }
