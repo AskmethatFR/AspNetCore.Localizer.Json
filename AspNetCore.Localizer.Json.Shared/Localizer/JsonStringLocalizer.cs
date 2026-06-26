@@ -169,11 +169,34 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         public IStringLocalizer WithCulture(CultureInfo culture)
         {
-            LocalizationOptions.Value.SupportedCultureInfos.Add(culture);
+            var clonedOptions = new JsonLocalizationOptions
+            {
+                ResourcesPath = LocalizationOptions.Value.ResourcesPath,
+                CacheDuration = LocalizationOptions.Value.CacheDuration,
+                Caching = LocalizationOptions.Value.Caching,
+                DistributedCache = LocalizationOptions.Value.DistributedCache,
+                DefaultCulture = LocalizationOptions.Value.DefaultCulture,
+                DefaultUICulture = LocalizationOptions.Value.DefaultUICulture,
+                SupportedCultureInfos = new HashSet<CultureInfo>(LocalizationOptions.Value.SupportedCultureInfos)
+                {
+                    culture
+                },
+                FileEncodingName = LocalizationOptions.Value.FileEncodingName,
+                PluralSeparator = LocalizationOptions.Value.PluralSeparator,
+                MissingTranslationLogBehavior = LocalizationOptions.Value.MissingTranslationLogBehavior,
+                LocalizationMode = LocalizationOptions.Value.LocalizationMode,
+                MissingTranslationsOutputFile = LocalizationOptions.Value.MissingTranslationsOutputFile,
+                LocalizerDiagnosticMode = LocalizationOptions.Value.LocalizerDiagnosticMode,
+                IgnoreJsonErrors = LocalizationOptions.Value.IgnoreJsonErrors,
+                AssemblyHelper = LocalizationOptions.Value.AssemblyHelper,
+                AdditionalResourcesPaths = LocalizationOptions.Value.AdditionalResourcesPaths,
+                UseEmbeddedResources = LocalizationOptions.Value.UseEmbeddedResources,
+                CacheMaxSize = LocalizationOptions.Value.CacheMaxSize,
+                MaxMissingTranslations = LocalizationOptions.Value.MaxMissingTranslations,
+                MissingTranslationRetention = LocalizationOptions.Value.MissingTranslationRetention
+            };
 
-            CultureInfo.CurrentCulture = culture;
-
-            return new JsonStringLocalizer(LocalizationOptions);
+            return new JsonStringLocalizer(Options.Create(clonedOptions));
         }
 
         private string? GetString(string name, bool shouldTryDefaultCulture = true)
