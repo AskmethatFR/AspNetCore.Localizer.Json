@@ -55,5 +55,22 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             // Should also find "Name1" in the same resource file
             Assert.AreEqual("My Name 1", withBaseName["Name1"].Value);
         }
+
+        [TestMethod]
+        public void Double_Dispose_Does_Not_Throw()
+        {
+            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
+
+            var localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions
+            {
+                DefaultCulture = new CultureInfo("en-US"),
+                SupportedCultureInfos = { new CultureInfo("en-US") },
+                ResourcesPath = "Resources",
+                UseEmbeddedResources = false
+            });
+
+            localizer.Dispose();
+            localizer.Dispose();
+        }
     }
 }

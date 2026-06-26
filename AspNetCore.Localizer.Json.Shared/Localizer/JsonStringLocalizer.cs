@@ -19,7 +19,6 @@ namespace AspNetCore.Localizer.Json.Localizer
     {
         private readonly string? _missingTranslationsFile = null;
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _missingTranslations = new();
-        private bool _disposed = false;
 
         public JsonStringLocalizer(IOptions<JsonLocalizationOptions> localizationOptions) : base(localizationOptions)
         {
@@ -40,13 +39,9 @@ namespace AspNetCore.Localizer.Json.Localizer
 
         protected override void Dispose(bool disposing)
         {
-            if (!_disposed)
+            if (disposing)
             {
-                if (disposing)
-                {
-                    _missingTranslations.Clear();
-                }
-                _disposed = true;
+                _missingTranslations.Clear();
             }
 
             base.Dispose(disposing);
