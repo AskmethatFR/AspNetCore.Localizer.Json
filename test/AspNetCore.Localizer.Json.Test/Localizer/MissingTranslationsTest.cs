@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using AspNetCore.Localizer.Json.JsonOptions;
 using LocalizedString = Microsoft.Extensions.Localization.LocalizedString;
 using System.IO;
@@ -54,6 +55,27 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             var allJsonFiles = Directory.GetFiles($".", "*.json").ToList();
 
             Assert.IsTrue(allJsonFiles.Exists(s => s.Contains(name)));
+        }
+
+        [TestMethod]
+        public async Task MissingTranslation_WithCollectToJSON_WritesFileEventually()
+        {
+            var defaultJsonFile = JsonLocalizationOptions.DEFAULT_MISSING_TRANSLATIONS;
+            var extension = Path.GetExtension(defaultJsonFile);
+            var name = Path.GetFileNameWithoutExtension(defaultJsonFile);
+            var actualName = $"{name}-en-AU{extension}";
+
+            if (File.Exists(actualName))
+                File.Delete(actualName);
+
+            InitLocalizer("en-AU");
+
+            localizer.GetString("AsyncTestKey", false);
+
+            await Task.Delay(500);
+
+            Assert.IsTrue(File.Exists(actualName),
+                $"Missing translations file '{actualName}' should be written eventually (async)");
         }
 
         /// <summary>
