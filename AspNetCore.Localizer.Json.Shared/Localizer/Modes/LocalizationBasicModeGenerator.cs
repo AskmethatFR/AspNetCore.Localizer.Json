@@ -41,7 +41,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                         AddOrUpdateLocalizedValue(localization, localizedValue, temp);
                     }
                 }
-                catch
+                catch (Exception ex) when (ex is JsonException or IOException)
                 {
                     if (!options.IgnoreJsonErrors)
                         throw;

@@ -4,7 +4,9 @@ using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using AspNetCore.Localizer.Json.JsonOptions;
 
 namespace AspNetCore.Localizer.Json.Test.Localizer
@@ -53,5 +55,45 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
             Assert.AreEqual("", result);
         }
 
+        [TestMethod]
+        public void MalformedJson_IgnoreErrorsTrue_DoesNotThrow()
+        {
+            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
+
+            var localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            {
+                DefaultCulture = new CultureInfo("en-US"),
+                SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>
+                {
+                    new CultureInfo("en-US")
+                },
+                ResourcesPath = "badjson",
+                IgnoreJsonErrors = true,
+                UseEmbeddedResources = false,
+            });
+
+            var result = localizer.GetString("Name1");
+            Assert.AreEqual("Name1", result);
+        }
+
+        [TestMethod]
+        public void MalformedJson_IgnoreErrorsFalse_ThrowsJsonException()
+        {
+            CultureInfo.CurrentUICulture = new CultureInfo("en-US");
+
+            var localizer = JsonStringLocalizerHelperFactory.Create(new JsonLocalizationOptions()
+            {
+                DefaultCulture = new CultureInfo("en-US"),
+                SupportedCultureInfos = new System.Collections.Generic.HashSet<CultureInfo>
+                {
+                    new CultureInfo("en-US")
+                },
+                ResourcesPath = "badjson",
+                IgnoreJsonErrors = false,
+                UseEmbeddedResources = false,
+            });
+
+            Assert.ThrowsException<JsonException>(() => localizer.GetString("Name1"));
+        }
     }
 }
