@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Format;
@@ -167,8 +168,15 @@ namespace AspNetCore.Localizer.Json.Localizer
 
             if (LocalizationOptions.Value.UseEmbeddedResources)
             {
-                var assembly = _assemblyHelper.GetAssembly();
-                var resourceNames = assembly.GetManifestResourceNames();
+                var assemblies = _assemblyHelper.GetAssemblies();
+                var resourceNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var asm in assemblies)
+                {
+                    foreach (var name in asm.GetManifestResourceNames())
+                    {
+                        resourceNames.Add(name);
+                    }
+                }
 
                 return resourceNames
                     .Where(name =>

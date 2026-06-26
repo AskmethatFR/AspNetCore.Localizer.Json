@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using AspNetCore.Localizer.Json.Commons;
 
@@ -13,5 +14,10 @@ public class AssemblyStub : IAssemblyHelper
     public Assembly GetAssembly()
     {
         return _assembly;
+    }
+
+    public IReadOnlyList<Assembly> GetAssemblies()
+    {
+        return new[] { _assembly };
     }
 }

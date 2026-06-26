@@ -1,0 +1,12 @@
+{
+  "Key1": {
+    "Values": {
+      "en-US": "Value1 from AssemblyA"
+    }
+  },
+  "SharedKey": {
+    "Values": {
+      "en-US": "Shared from AssemblyA"
+    }
+  }
+}
