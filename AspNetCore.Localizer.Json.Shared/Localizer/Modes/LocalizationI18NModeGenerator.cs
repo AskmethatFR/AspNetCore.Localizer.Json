@@ -145,12 +145,10 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
                 Stream stream;
                 if (options.UseEmbeddedResources)
                 {
-                    stream = null;
-                    foreach (var assembly in options.AssemblyHelper.GetAssemblies())
-                    {
-                        stream = assembly.GetManifestResourceStream(resourceName);
-                        if (stream != null) break;
-                    }
+                    stream = options.AssemblyHelper.GetAssemblies()
+                        .Select(a => a.GetManifestResourceStream(resourceName))
+                        .FirstOrDefault(s => s != null);
+
                     if (stream == null)
                     {
                         throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");

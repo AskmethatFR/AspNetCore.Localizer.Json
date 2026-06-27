@@ -13,7 +13,7 @@ namespace AspNetCore.Localizer.Json.Commons
         {
             if (assemblies == null) throw new ArgumentNullException(nameof(assemblies));
             if (assemblies.Length == 0) throw new ArgumentException("At least one assembly is required.", nameof(assemblies));
-            _assemblies = assemblies;
+            _assemblies = assemblies.ToList().AsReadOnly();
         }
 
         public MultiAssemblyHelper(params string[] assemblyNames)

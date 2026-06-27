@@ -5,6 +5,7 @@ using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.JsonOptions;
 using AspNetCore.Localizer.Json.Localizer;
 using AspNetCore.Localizer.Json.Test.Helpers;
+using AspNetCore.Localizer.Json.TestMultiAssembly;
 using Microsoft.Extensions.Localization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -23,7 +24,7 @@ namespace AspNetCore.Localizer.Json.Test.Localizer
                 AdditionalResourcesPaths = additionalPaths ?? System.Array.Empty<string>(),
                 AssemblyHelper = new MultiAssemblyHelper(
                     Assembly.GetExecutingAssembly(),
-                    Assembly.GetExecutingAssembly())
+                    typeof(MultiAssemblyBResourcesMarker).Assembly)
             });
         }
 

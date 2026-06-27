@@ -170,6 +170,8 @@ namespace AspNetCore.Localizer.Json.Localizer
             {
                 var assemblies = _assemblyHelper.GetAssemblies();
                 var resourceNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // OrdinalIgnoreCase: assembly resource names are case-insensitive on Windows,
+                // and embedded resources may differ only by case across assemblies.
                 foreach (var asm in assemblies)
                 {
                     foreach (var name in asm.GetManifestResourceNames())
