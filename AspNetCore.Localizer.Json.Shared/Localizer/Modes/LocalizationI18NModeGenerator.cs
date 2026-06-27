@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AspNetCore.Localizer.Json.Format;
@@ -140,26 +142,41 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
         {
             try
             {
-                using Stream stream = options.UseEmbeddedResources
-                    ? options.AssemblyHelper.GetAssembly().GetManifestResourceStream(resourceName)
-                    ?? throw new FileNotFoundException($"La ressource incorporée '{resourceName}' est introuvable.")
-                    : File.OpenRead(resourceName);
-
-                ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, options.FileEncoding);
-
-                JsonReaderOptions readerOptions = new JsonReaderOptions
+                Stream stream;
+                if (options.UseEmbeddedResources)
                 {
-                    AllowTrailingCommas = true,
-                    CommentHandling = JsonCommentHandling.Skip
-                };
+                    stream = options.AssemblyHelper.GetAssemblies()
+                        .Select(a => a.GetManifestResourceStream(resourceName))
+                        .FirstOrDefault(s => s != null);
 
-                Utf8JsonReader jsonReader = new Utf8JsonReader(jsonData, readerOptions);
-
-                while (jsonReader.Read())
-                {
-                    if (jsonReader.TokenType == JsonTokenType.StartObject)
+                    if (stream == null)
                     {
-                        TraverseJson(localization, ref jsonReader, string.Empty, isParent);
+                        throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
+                    }
+                }
+                else
+                {
+                    stream = File.OpenRead(resourceName);
+                }
+
+                using (stream)
+                {
+                    ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, options.FileEncoding);
+
+                    JsonReaderOptions readerOptions = new JsonReaderOptions
+                    {
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip
+                    };
+
+                    Utf8JsonReader jsonReader = new Utf8JsonReader(jsonData, readerOptions);
+
+                    while (jsonReader.Read())
+                    {
+                        if (jsonReader.TokenType == JsonTokenType.StartObject)
+                        {
+                            TraverseJson(localization, ref jsonReader, string.Empty, isParent);
+                        }
                     }
                 }
             }

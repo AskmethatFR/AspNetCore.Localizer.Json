@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\AspNetCore.Localizer.Json\AspNetCore.Localizer.Json.csproj" />
     <ProjectReference Include="..\AspNetCore.Localizer.Json.TestSample\AspNetCore.Localizer.Json.TestSample.csproj" />
+    <ProjectReference Include="..\AspNetCore.Localizer.Json.TestMultiAssembly\AspNetCore.Localizer.Json.TestMultiAssembly.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +37,7 @@
     <EmbeddedResource Include="encoding\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="interpolation\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="i18nLeak\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="multiAssemblyA\**\*.json" WithCulture="false" />
     <Content Include="physical\**\*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

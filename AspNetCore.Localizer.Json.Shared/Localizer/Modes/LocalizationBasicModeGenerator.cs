@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -99,19 +100,21 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
         /// <summary>
         /// Reads and deserializes an embedded resource using streaming to minimize memory allocations.
+        /// Tries each assembly in order; first found wins.
         /// </summary>
         private Dictionary<TKey, TValue>? ReadAndDeserializeEmbeddedResourceStreaming<TKey, TValue>(string resourceName, Encoding encoding)
         {
-            Assembly assembly = _options.AssemblyHelper.GetAssembly();
-
-            using Stream stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream == null)
+            foreach (var assembly in _options.AssemblyHelper.GetAssemblies())
             {
-                throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
+                using Stream stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, encoding);
+                    return JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(jsonData.AsSpan());
+                }
             }
 
-            ArraySegment<byte> jsonData = JsonStreamReader.ReadStreamToBuffer(stream, encoding);
-            return JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(jsonData.AsSpan());
+            throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
         }
 
         /// <summary>
