@@ -280,26 +280,13 @@ namespace AspNetCore.Localizer.Json.Localizer
                 return false;
             }
 
-            var nameWithoutExt = Path.GetFileNameWithoutExtension(resourceName) ?? string.Empty;
-            var segments = nameWithoutExt.Split('.', StringSplitOptions.RemoveEmptyEntries);
-
-            // Find the resource path segment and only look after it for culture codes
             var pathToLook = LocalizationOptions.Value.ResourcesPath ?? "Resources";
-            var resourcePathIndex = Array.FindIndex(segments,
-                s => s.Equals(pathToLook, StringComparison.OrdinalIgnoreCase));
-            var startIndex = resourcePathIndex >= 0 ? resourcePathIndex + 1 : 0;
-
-            for (var i = startIndex; i < segments.Length; i++)
-            {
-                if (CultureNameRegex.IsMatch(segments[i]) &&
-                    !string.Equals(segments[i], CultureInfo.InvariantCulture.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    return cultureCandidates.Contains(segments[i]);
-                }
-            }
+            var additionalPaths = LocalizationOptions.Value.AdditionalResourcesPaths ?? Array.Empty<string>();
+            var resourcePaths = new[] { pathToLook }.Concat(additionalPaths);
+            var culture = EmbeddedResourceCultureResolver.GetCulture(resourceName, resourcePaths);
 
             // No culture segment found: treat as neutral/default resource.
-            return true;
+            return string.IsNullOrEmpty(culture) || cultureCandidates.Contains(culture);
         }
         #endregion
 
