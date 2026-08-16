@@ -38,6 +38,9 @@
     <EmbeddedResource Include="interpolation\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="i18nLeak\**\*.json" WithCulture="false" />
     <EmbeddedResource Include="multiAssemblyA\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18nShortName\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18nExtra\**\*.json" WithCulture="false" />
+    <EmbeddedResource Include="i18nFolder\**\*.json" WithCulture="false" />
     <Content Include="physical\**\*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

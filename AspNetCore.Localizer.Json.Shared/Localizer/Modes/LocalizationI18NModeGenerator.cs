@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using AspNetCore.Localizer.Json.Commons;
 using AspNetCore.Localizer.Json.Format;
 using AspNetCore.Localizer.Json.JsonOptions;
 using AspNetCore.Localizer.Json.Localizer.Pooling;
@@ -33,7 +34,7 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
 
             foreach (string resourceName in resourceNames)
             {
-                string cultureName = GetCultureNameFromResource(resourceName, options.UseEmbeddedResources);
+                string cultureName = GetCultureNameFromResource(resourceName, options);
                 if (!IsRelevantCultureFile(cultureName, currentCulture, options))
                 {
                     continue;
@@ -93,25 +94,17 @@ namespace AspNetCore.Localizer.Json.Localizer.Modes
             return allowedCultures.Contains(cultureName);
         }
 
-        private static string GetCultureNameFromResource(string resourceName, bool useEmbeddedResources)
+        private static string GetCultureNameFromResource(string resourceName, JsonLocalizationOptions options)
         {
-            if (useEmbeddedResources)
+            if (options.UseEmbeddedResources)
             {
-                // Embedded resource names are dotted (e.g. "Namespace.Resources.fr.localization.json")
-                // The culture code is a segment before the file basename
-                var nameWithoutExt = Path.GetFileNameWithoutExtension(resourceName) ?? string.Empty;
-                var segments = nameWithoutExt.Split('.', StringSplitOptions.RemoveEmptyEntries);
-
-                // Walk segments in reverse to find the closest culture segment
-                for (int i = segments.Length - 1; i >= 0; i--)
-                {
-                    if (CultureNameRegex.IsMatch(segments[i]))
-                    {
-                        return segments[i];
-                    }
-                }
-
-                return string.Empty;
+                // Embedded resource names are dotted (e.g. "Namespace.Resources.fr.localization.json").
+                // Delegate to the shared resolver so a short file base name (e.g. "url") is not
+                // mistaken for a culture code (issue #44). Both the primary ResourcesPath and any
+                // AdditionalResourcesPaths may anchor the content segments.
+                var resourcePaths = new[] { options.ResourcesPath ?? "Resources" }
+                    .Concat(options.AdditionalResourcesPaths ?? Array.Empty<string>());
+                return EmbeddedResourceCultureResolver.GetCulture(resourceName, resourcePaths);
             }
 
             // For file-system paths, check the parent directory name (e.g. "Resources/fr/localization.json")

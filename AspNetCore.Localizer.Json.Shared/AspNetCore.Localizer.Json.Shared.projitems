@@ -9,6 +9,7 @@
     <Import_RootNamespace>AspNetCore.Localizer.Json.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Commons\EmbeddedResourceCultureResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Commons\IAssemblyHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Commons\MultiAssemblyHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Format\JsonLocalizationFormat.cs" />
